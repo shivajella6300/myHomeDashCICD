@@ -1,124 +1,191 @@
-import { Button } from '@mui/material';
-import React,{useContext, useState} from 'react'
-import { RiMenu2Line } from "react-icons/ri";
-import Badge from '@mui/material/Badge';
+import {  Button,  Dialog,  DialogTitle,  DialogContent,  DialogActions,  Badge,  Menu,  MenuItem,  IconButton,} from '@mui/material';
+import React, { useContext, useState } from 'react';
 import { styled } from '@mui/material/styles';
-import IconButton from '@mui/material/IconButton';
 import { FaRegBell } from "react-icons/fa";
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import Divider from '@mui/material/Divider';
 import { FaUser } from "react-icons/fa6";
 import { PiSignOutBold } from "react-icons/pi";
-import {MyContext} from '../../App';
+import { MdUpload } from "react-icons/md";
+import { MyContext } from '../../App';
+import { useNavigate } from 'react-router-dom';
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
-      '& .MuiBadge-badge': {
-        right: -3,
-        top: 13,
-        border: `2px solid ${theme.palette.background.paper}`,
-        padding: '0 4px',
-      },
+  '& .MuiBadge-badge': {
+    right: -3,
+    top: 13,
+    border: `2px solid ${theme.palette.background.paper}`,
+    padding: '0 4px',
+  },
 }));
 
- function Header() {
-  const [anchorMyAcc,setAnchorMyAcc] = useState(null);
+function Header() {
+  const [anchorMyAcc, setAnchorMyAcc] = useState(null);
+  const [openProfileModal, setOpenProfileModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const defaultImg = 'https://randomuser.me/api/portraits/women/79.jpg';
+  const [profileImage, setProfileImage] = useState(() => {
+    return localStorage.getItem('profileImage') || defaultImg;
+  });
+
   const openMyAcc = Boolean(anchorMyAcc);
-  const handleClickMyAcc = (event)=> 
-    {
-      setAnchorMyAcc(event.currentTarget);
-    };
-  const handleCloseMyAcc = () => 
-    {
-      setAnchorMyAcc(null);
-    };
-    const context=useContext(MyContext);
-    console.log(context.isSidebarOpen);
+  const navigate = useNavigate();
+  const context = useContext(MyContext);
+
+  const token = JSON.parse(localStorage.getItem("userInfo")) || {
+    employee: "", Emp_Id: "", token: ""
+  };
+
+  const handleClickMyAcc = (event) => {
+    setAnchorMyAcc(event.currentTarget);
+  };
+
+  const handleCloseMyAcc = () => {
+    setAnchorMyAcc(null);
+  };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    let greeting = '';
+    let emoji = '';
+    if (hour < 12) {
+      greeting = 'Good Morning!'; emoji = '☀️';
+    } else if (hour < 18) {
+      greeting = 'Good Afternoon!'; emoji = '🌤️';
+    } else {
+      greeting = 'Good Evening!'; emoji = '🌙';
+    }
+    return `${greeting}${emoji} ${token?.employee ? ` ${token.employee}` : ''} `;
+  };
+
+  const userLogout = async () => {
+    try {
+      const LogoutResponse = await fetch("http://172.20.0.12:8085/StationeryApis/api/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token.token}`,
+        },
+        body: JSON.stringify({}),
+      });
+
+      localStorage.setItem('userInfo', JSON.stringify({ Emp_Id: "", employee: "", token: "" }));
+      navigate('/login');
+
+      if (!LogoutResponse.ok) throw new Error("Server is Not Responding Error 500");
+    } catch (error) {
+      console.error("Logout Failed 401");
+    }
+  };
+
+  const handleProfileOpen = () => setOpenProfileModal(true);
+  const handleProfileClose = () => setOpenProfileModal(false);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) setSelectedImage(URL.createObjectURL(file));
+  };
+
   return (
-      <header className={`w-full h-[auto] py-2   flex items-center justify-between pr-7 bg-[#fff] shadow-sm border-b ${context.isSidebarOpen===true?'pl-64':'pl-5'} transition-all`}>
-          <div className='part1'>
-               <Button  className='!w-[40px] !h-[40px] !rounded-full 
-               !min-w-[40px] 
-               !text-[rgba(0,0,0,0.8)]'
-                onClick={()=>{
-                 // alert(context.setisSidebarOpen);
-                    context.setisSidebarOpen(!context.isSidebarOpen)}}>
-                  <RiMenu2Line className='text-[18px] text-[rgba(0,0,0,0.8)]'/>
-                </Button>
+    <>
+      <header className="relative sticky top-0 z-50 w-full h-[auto] py-2 flex items-center justify-between pr-7 
+        bg-gradient-to-r from-rose-900 to-rose-500 text-white shadow-md">
+
+        {/* Logo */}
+        <div className="flex items-center gap-3">
+          <div className="w-[60px] h-[60px] rounded-full p-[4px] bg-white neon-ring flex items-center justify-center ml-5" style={{ marginRight: '150px' }}>
+            <img src="/myHomeDashboard/my home logo.png" alt="Home Logo" className="w-full h-full object-contain rounded-full" />
           </div>
-          <div className='part2 w-[40%] flex items-center justify-end gap-5'>
-            <IconButton aria-label="cart">
-              <StyledBadge badgeContent={4} color="secondary">
-                 <FaRegBell />
-              </StyledBadge>
-            </IconButton>
-            <div className="relative">
-              <div className='rounded-full w-[35px] h-[35px] overflow-hidden cursor-pointer' onClick={handleClickMyAcc}>
-                <img src='https://ecme-react.themenate.net/img/avatars/thumb-1.jpg' className='w-full h-full object-cover'/>
-              </div>
-                 <Menu
-                    anchorEl={anchorMyAcc}
-                    id="account-menu"
-                    open={openMyAcc}
-                    onClose={handleCloseMyAcc}
-                    onClick={handleCloseMyAcc}
-                    slotProps={{
-                      paper: {
-                        elevation: 0,
-                        sx: {
-                          overflow: 'visible',
-                          filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-                          mt: 1.5,
-                          '& .MuiAvatar-root': {
-                            width: 32,
-                            height: 32,
-                            ml: -0.5,
-                            mr: 1,
-                          },
-                          '&::before': 
-                          {
-                            content: '""',
-                            display: 'block',
-                            position: 'absolute',
-                            top: 0,
-                            right: 14,
-                            width: 10,
-                            height: 10,
-                            bgcolor: 'background.paper',
-                            transform: 'translateY(-50%) rotate(45deg)',
-                            zIndex: 0,
-                          },
-                        },
-                      },
-                    }}
-                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                  >
-                    <MenuItem onClick={handleCloseMyAcc} className='!bg-white'>
-                      <div className='flex items-center gap-3'>
-                          <div className='rounded-full w-[35px] h-[35px] overflow-hidden cursor-pointer'>
-                              <img src='https://ecme-react.themenate.net/img/avatars/thumb-1.jpg' className='w-full h-full object-cover'/>
-                          </div>
-                          <div className='info'>
-                            <h1 className='text-[15px] font-[500] leading-5'>Angelina Gotelli</h1>
-                            <p className='text-[12px]  font-[400] opacity-70'>admin-Bl@ecme.com</p>
-                          </div>
-                      </div>
-                    </MenuItem>
-                    <Divider />
-                    <MenuItem onClick={handleCloseMyAcc} className='flex items-center gap-3'>
-                      <FaUser/>  <span className='text-[18px]'>Profile</span>
-                    </MenuItem>
-                    
-                    <MenuItem onClick={handleCloseMyAcc} className='flex items-center gap-3'>
-                       <PiSignOutBold/>  <span className='text-[18px]'>Sign Out</span>
-                    </MenuItem>
-                  </Menu>
+        </div>
+
+        {/* Greeting */}
+        <div className="absolute left-1/2 transform -translate-x-1/2">
+          <h1 className="text-xl font-semibold whitespace-nowrap">{getGreeting()}</h1>
+        </div>
+
+        {/* Notifications + Profile */}
+        <div className='part2 w-[40%] flex items-center justify-end gap-5'>
+          <IconButton aria-label="notifications">
+            <StyledBadge badgeContent={4} color="secondary">
+              <FaRegBell style={{ color: 'white' }} />
+            </StyledBadge>
+          </IconButton>
+          <div className="relative">
+            <div className='rounded-full w-[35px] h-[35px] overflow-hidden cursor-pointer' onClick={handleClickMyAcc}>
+              <img src={profileImage || defaultImg} onError={(e) => e.target.src = defaultImg} className='w-full h-full object-cover' />
             </div>
+
+            <Menu
+              anchorEl={anchorMyAcc}
+              open={openMyAcc}
+              onClose={handleCloseMyAcc}
+              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            >
+              <MenuItem onClick={() => { handleCloseMyAcc(); handleProfileOpen(); }}>
+                <FaUser className='mr-2' /> Profile
+              </MenuItem>
+              <MenuItem onClick={() => { handleCloseMyAcc(); userLogout(); }}>
+                <PiSignOutBold className='mr-2' /> Sign Out
+              </MenuItem>
+            </Menu>
           </div>
+        </div>
       </header>
-  )
+
+      {/* Profile Modal */}
+      <Dialog open={openProfileModal} onClose={handleProfileClose}>
+        <DialogTitle>User Profile</DialogTitle>
+        <DialogContent className="flex flex-col gap-4 p-4">
+          <div className="relative w-[120px] h-[120px] self-center">
+            <img
+              src={selectedImage || profileImage || defaultImg}
+              onError={(e) => e.target.src = defaultImg}
+              alt="Profile"
+              className="rounded-full w-full h-full object-cover border-4 border-rose-600"
+            />
+            <label htmlFor="upload-button">
+              <div className="absolute bottom-0 right-0 bg-white p-2 rounded-full cursor-pointer shadow-md">
+                <MdUpload className="text-xl text-rose-700" />
+              </div>
+              <input
+                type="file"
+                id="upload-button"
+                accept="image/*"
+                hidden
+                onChange={handleImageChange}
+              />
+            </label>
+          </div>
+
+          {/* Profile Info */}
+          <div className="space-y-2 text-left font-semibold">
+            <p>Name: <span className="font-normal text-gray-500">{token.employee || "John Doe"}</span></p>
+            <p>Email: <span className="font-normal text-gray-500">{token.Email}</span></p>
+            <p>Emp ID: <span className="font-normal text-gray-500">{token.Emp_Id || "123456" }</span></p>
+            <p>Department: <span className="font-normal text-gray-500">Engineering</span></p>
+          </div>
+
+        </DialogContent>
+
+        <DialogActions className="justify-between p-4">
+          <Button variant="outlined" onClick={handleProfileClose}>Close</Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              if (selectedImage) {
+                setProfileImage(selectedImage);
+                localStorage.setItem("profileImage", selectedImage);
+              }
+              setOpenProfileModal(false);
+            }}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
 }
+
 export default Header;
-//Material Already Have the Default So 
-// That Why I used Important Symbol that is not Exclamation(!)

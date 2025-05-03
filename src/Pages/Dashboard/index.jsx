@@ -15,7 +15,7 @@ const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
 const Dashboard = () => {
   return (
     <>
-       <div className='w-full px-5 border border-[rgba(0,0,0,0.1)] flex items-center bg-[#f1faff]
+       {/* <div className='w-full px-5 border border-[rgba(0,0,0,0.1)] flex items-center bg-[#f1faff]
            gap-8 mb-5 justify-between rounded-md py-2'>
            <div className='info'>
               <h1 className='text-[35px] font-bold leading-10 mb-3'>Good Morning, Cameron</h1><br/>
@@ -23,9 +23,10 @@ const Dashboard = () => {
               <Button className='btn-blue !capitalize'><FaPlus/>Add Product</Button>
            </div>
            <img src="/banner2.jpg" className='w-[200px] h-[200px]'/>
-       </div>  
+       </div>   */}
       <DashboardBoxes/>
-      <div className='card my-4 shadow-md sm:rounded-lg bg-white'>
+      
+      {/* <div className='card my-4 shadow-md sm:rounded-lg bg-white'>
         <div className="flex items-center justify-between px-3 py-5">
           <h2 className='font-[20px] font-[600]'>Products <span className='text-[400] text-[12px]'>(Tailwind css Table)</span></h2>
         </div>
@@ -385,10 +386,10 @@ const Dashboard = () => {
             <div className='!flex !items-center justify-end '>
                 <Pagination count={10} color="primary" className='px-6 py-4' />
             </div>
-      </div>
+      </div> */}
 
 
-      <div className='card my-4 shadow-md sm:rounded-lg bg-white'>
+      {/* <div className='card my-4 shadow-md sm:rounded-lg bg-white'>
         <div className="flex items-center justify-between px-3 py-5">
           <h2 className='font-[20px] font-[600]'>Recent Orders</h2>
         </div>
@@ -480,7 +481,7 @@ const Dashboard = () => {
                 </tbody>
             </table>
         </div>
-      </div>
+      </div> */}
 
 {/*------------------------------------DataTables In the ReactJs------------------------------------------------*/}
 
