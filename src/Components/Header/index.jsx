@@ -54,7 +54,7 @@ function Header() {
     } else {
       greeting = 'Good Evening!'; emoji = '🌙';
     }
-    return `${greeting}${emoji} ${token?.employee ? ` ${token.employee}` : ''} `;
+    return `${greeting}${emoji} ${token?.employee ? ` ${token.employee}-${(token.Emp_Category)}` : ''} `;
   };
 
   const userLogout = async () => {
@@ -135,38 +135,40 @@ function Header() {
 
       {/* Profile Modal */}
       <Dialog open={openProfileModal} onClose={handleProfileClose}>
-        <DialogTitle>User Profile</DialogTitle>
-        <DialogContent className="flex flex-col gap-4 p-4">
-          <div className="relative w-[120px] h-[120px] self-center">
-            <img
-              src={selectedImage || profileImage || defaultImg}
-              onError={(e) => e.target.src = defaultImg}
-              alt="Profile"
-              className="rounded-full w-full h-full object-cover border-4 border-rose-600"
-            />
-            <label htmlFor="upload-button">
-              <div className="absolute bottom-0 right-0 bg-white p-2 rounded-full cursor-pointer shadow-md">
-                <MdUpload className="text-xl text-rose-700" />
-              </div>
-              <input
-                type="file"
-                id="upload-button"
-                accept="image/*"
-                hidden
-                onChange={handleImageChange}
-              />
-            </label>
-          </div>
+        <DialogTitle>Welcome to your Profile</DialogTitle>
+        <DialogContent 
+  className="flex flex-col gap-4 p-4"
+  style={{ minWidth: '400px', maxWidth: '400px' }}
+>
+  <div className="relative w-[120px] h-[120px] self-center">
+    <img
+      src={selectedImage || profileImage || defaultImg}
+      onError={(e) => e.target.src = defaultImg}
+      alt="Profile"
+      className="rounded-full w-full h-full object-cover border-4 border-rose-600"
+    />
+    <label htmlFor="upload-button">
+      <div className="absolute bottom-0 right-0 bg-white p-2 rounded-full cursor-pointer shadow-md">
+        <MdUpload className="text-xl text-rose-700" />
+      </div>
+      <input
+        type="file"
+        id="upload-button"
+        accept="image/*"
+        hidden
+        onChange={handleImageChange}
+      />
+    </label>
+  </div>
 
-          {/* Profile Info */}
-          <div className="space-y-2 text-left font-semibold">
-            <p>Name: <span className="font-normal text-gray-500">{token.employee || "John Doe"}</span></p>
-            <p>Email: <span className="font-normal text-gray-500">{token.Email}</span></p>
-            <p>Emp ID: <span className="font-normal text-gray-500">{token.Emp_Id || "123456" }</span></p>
-            <p>Department: <span className="font-normal text-gray-500">Engineering</span></p>
-          </div>
+  <div className="space-y-2 text-left font-semibold">
+    <p>Name: <span className="font-normal text-gray-500 break-words">{token.employee || "John Doe"}</span></p>
+    <p>Email: <span className="font-normal text-gray-500 break-words">{token.Email || "user@example.com"}</span></p>
+    <p>Emp ID: <span className="font-normal text-gray-500">{token.Emp_Id || "123456" }</span></p>
+    <p>Department: <span className="font-normal text-gray-500">Engineering</span></p>
+  </div>
+</DialogContent>
 
-        </DialogContent>
 
         <DialogActions className="justify-between p-4">
           <Button variant="outlined" onClick={handleProfileClose}>Close</Button>

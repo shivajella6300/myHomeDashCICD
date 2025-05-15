@@ -5,12 +5,9 @@ import { DataGrid } from '@mui/x-data-grid';
 import { Button, Paper, TextField } from '@mui/material';
 import Swal from 'sweetalert2'; // Import SweetAlert2
 
-const StationeryApproverForm = () => {
+const StationaryStoreApproval = () => {
   const { case_id } = useParams();
   const [statData, setStationaryData]=useState([]);
-  const [errors,setError]=useState('');
-  const [statSubData,setSubStationaryData]=useState([]);
-  //console.log(statSubData);
   const [formData, setFormData] = useState({
     date: "",
     request_for: "",
@@ -26,10 +23,15 @@ const StationeryApproverForm = () => {
     return JSON.parse(localStorage.getItem("userInfo")) || {};
   });
   const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState("");
+  const [errors, setErrors] = useState({});
+  const [attempted, setAttempted] = useState(false);
   const navigate = useNavigate();
+  const [statSubData,setSubStationaryData]=useState([]);
   const [selectedRowIds, setSelectedRowIds] = useState([]);
-  
-  const fetchDataByEmpId = async() => {
+  console.log(statSubData);
+  const fetchDataByEmpId = async() => 
+{
     try {
       const getDataStBYEmpId = await fetch(`http://127.0.0.1:8000/api/gt-stat-userId/${case_id}`, {
         method: "GET",
@@ -42,22 +44,8 @@ const StationeryApproverForm = () => {
       
       const statAndSubStatData = await getDataStBYEmpId.json();
       setStationaryData(statAndSubStatData.Stationary_data[0]);
-      const { SubStationary_data } = statAndSubStatData;
-      console.log("SubStationaryData:",SubStationary_data)
-      if (Number(userToken.Is_Employee) === 2) 
-      {
-          const approvedItems = statAndSubStatData.SubStationary_data.filter(
-            item => item.sub_status === "Approve"
-          );
-        console.log("Approved Items:", approvedItems);
-        setSubStationaryData(approvedItems);
-      }
-      else 
-      {
-        const todoItems = SubStationary_data.filter(item => item.sub_status === "TO_DO");
-        console.log("TO_DO Items:", todoItems);
-        setSubStationaryData(todoItems);
-      }
+      const subStatFilter = statAndSubStatData.SubStationary_data.filter((item)=>item.sub_status === "Approve")
+      setSubStationaryData(subStatFilter);
     } catch(error) 
     {
       console.error("Error in getting the data");
@@ -70,23 +58,23 @@ const StationeryApproverForm = () => {
     }
   }, [case_id]);
 
-  useEffect(() => {
+  useEffect(() => 
+{
     const isPageRefresh = performance.navigation && performance.navigation.type === 1;
     if (isPageRefresh || document.referrer === document.location.href) {
       localStorage.removeItem('stationeryFormDraft');
     }
-    
     const today = new Date();
     const formattedDate = today.toISOString().split('T')[0];
-    setFormData(prev => ({...prev,date: formattedDate }));
+    setFormData(prev => ({ ...prev, date: formattedDate }));
   }, []);
 
   const handleBack = () => {
     navigate('/StationaryList');
   };
+
   //Hod Approval
-  const handleApprove = () => 
-    {
+  const handleApprove = () => {
     Swal.fire({
       title: 'Approved!',
       text: `Case ID: ${case_id} has been approved successfully`,
@@ -94,36 +82,22 @@ const StationeryApproverForm = () => {
       confirmButtonColor: '#10b981',
     });
   } 
-  const userData = 
-  {
+
+  const userData = {
     "hod_name": userToken.employee,
   }
+
   // Submit Approval selected rows
   const handleApproveSelected = async() => 
     {
     const selectedData = statSubData.filter((row) =>
       selectedRowIds.includes(row.substationary_id)
     );
-      const data = 
-      {
-        "subStat":selectedData,"UserData":userData
-      }
-  // Show confirmation dialog and wait for user response
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: "want to approve this request?",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Yes',
-      cancelButtonText: 'No',
-    });
-    // Only proceed if user confirmed
-    if (!result.isConfirmed) 
+    const data = 
     {
-      return; // User clicked "No", cancel submission
+      "subStat":selectedData,"UserData":userData
     }
-    try 
-    {
+    try {
       const subStatUpdate = await fetch("http://127.0.0.1:8000/api/stat-hod-aprvl",
         {
           method:"POST",
@@ -159,32 +133,17 @@ const StationeryApproverForm = () => {
   };
 
   //Reject Selected Rows-----
-  const handleRejectSelected = async() => 
-  {
-      const selectedData = statSubData.filter((row) =>
+  const handleRejectSelected = async() => {
+    const selectedData = statSubData.filter((row) =>
       selectedRowIds.includes(row.substationary_id)
     );
-    //console.log({"userData":userData});
+   // console.log({"subStat":selectedData});
+    console.log({"userData":userData});
     const data = 
     {
       "subStat":selectedData,"UserData":userData
     }
     // Post selectedData to your API if needed here
-   
-// Show confirmation dialog and wait for user response
-  const result = await Swal.fire({
-    title: 'Are you sure?',
-    text: "want to reject this request?",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Yes',
-    cancelButtonText: 'No',
-  });
-  // Only proceed if user confirmed
-    if (!result.isConfirmed) 
-    {
-      return; // User clicked "No", cancel submission
-    }
     try {
       const subStatUpdate = await fetch("http://127.0.0.1:8000/api/stat-hod-rejct",
         {
@@ -219,6 +178,7 @@ const StationeryApproverForm = () => {
       });
     }
   };
+
   const columns = [
     { 
       field: 'case_id', 
@@ -249,7 +209,7 @@ const StationeryApproverForm = () => {
       ),
     },
     {
-      field: 'hod_comments',
+      field: 'Comments',
       headerName: 'COMMENTS',
       width: 280,
       headerClassName: 'table-header',
@@ -267,8 +227,7 @@ const StationeryApproverForm = () => {
     },
   ];
 
-  const handleInputChange = (id, value, field) =>
-{
+  const handleInputChange = (id, value, field) => {
     setSubStationaryData(prev =>
       prev.map(row =>
         row.substationary_id === id ? { ...row, [field]: value } : row
@@ -276,7 +235,6 @@ const StationeryApproverForm = () => {
     );
   };
   
-
   const inputStyle = "w-full border border-blue-500 rounded-xl p-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400";
   const highlightedInputStyle = "w-full border border-blue-500 rounded-xl p-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 bg-blue-50";
   const errorInputStyle = "w-full border border-red-500 rounded-xl p-1 text-xs focus:outline-none focus:ring-1 focus:ring-red-400 bg-red-50";
@@ -292,7 +250,7 @@ const StationeryApproverForm = () => {
               </div>
               <div className="flex-grow flex justify-center">
                 <div className="bg-[#83bcc9] px-4 py-1 rounded-lg inline-block -ml-28">
-                  {userToken.Is_Employee==2?( <h1 className="text-lg font-bold text-white">Stationery Store Approval Form</h1>):( <h1 className="text-lg font-bold text-white">Stationery HOD Approval Form</h1>)}
+                  <h1 className="text-lg font-bold text-white">Stationery Store Approval Form</h1>
                 </div>
               </div>
               <div>
@@ -308,7 +266,9 @@ const StationeryApproverForm = () => {
           </div>
 
           <div className="h-0.5 bg-blue-600 w-[95%] mx-auto"></div>
+
           <div className="p-6 space-y-4">
+           
               {/* Top Layout */}
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-x-4 gap-y-3">
                 {/* Image Section - Smaller */}
@@ -443,7 +403,7 @@ const StationeryApproverForm = () => {
 
                   {/* Row 4: Department and Department HOD */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {/*Department field*/}
+                    {/* Department field */}
                     <div>
                       <div className="flex items-center">
                         <label className="w-1/3 text-indigo-800 font-bold text-xs">
@@ -533,10 +493,10 @@ const StationeryApproverForm = () => {
                     <textarea
                       name="comments"
                       placeholder="Add your comments here..."
-                      value={statData.overall_comment}
+                      value="No Comments"
                       readOnly
-                      className={`${inputStyle} text-center pt-3 h-10 rounded-lg text-xs bg-gradient-to-r from-blue-500 to-blue-300 text-white px-2 py-1`}>
-                      {statData.hod_name?statData.overall_comment:"No Comment"}
+                      className={`${inputStyle} text-center pt-3 h-10 rounded-lg text-xs bg-gradient-to-r from-blue-500 to-blue-300 text-white px-2 py-1`}
+                    >
                     </textarea>
                     </div>
                   </div>
@@ -551,8 +511,7 @@ const StationeryApproverForm = () => {
                 
                 <div className="mx-4">
                   <div className="flex gap-2 mb-2">
-                    {!(statData.stores_status=="Approve")?(
-                       <Button
+                    <Button
                       variant="contained"
                       color="success"
                       onClick={handleApproveSelected}
@@ -567,9 +526,7 @@ const StationeryApproverForm = () => {
                     >
                       Approve
                     </Button>
-                    ):("")}
-                    {!(userToken.Is_Employee==2)?(
-                        <Button
+                    <Button
                       variant="contained"
                       color="error"
                       onClick={handleRejectSelected}
@@ -584,10 +541,9 @@ const StationeryApproverForm = () => {
                     >
                       Reject 
                     </Button>
-                    ):""}
                   </div>
-                  {!(statData.stores_status=="Approve")?(
-                    <Paper 
+                  
+                  <Paper 
                     elevation={0}
                     sx={{ 
                       height: 280, 
@@ -598,68 +554,66 @@ const StationeryApproverForm = () => {
                     }}
                   >
                     <DataGrid
-                    rows={statSubData}
-                    columns={columns}
-                    getRowId={(row) => row.substationary_id}
-                    checkboxSelection
-                    onRowSelectionModelChange={(ids) => setSelectedRowIds(ids)}
-                    sx={{
-                      border: 0,
-                      '.MuiDataGrid-columnHeaders': {
-                        backgroundColor: '#dbeafe', // light blue
-                        color: '#1e40af',
-                        fontWeight: 'bold',
-                        fontSize: '0.75rem',
-                        borderBottom: '1px solid #e5e7eb',
-                      },
-                      '.MuiDataGrid-cell': {
-                        fontSize: '0.75rem',
-                        padding: '4px 8px',
-                        borderRight: '1px solid #e5e7eb', // 👈 vertical line
-                      },
-                      '.MuiDataGrid-columnHeader': {
-                        borderRight: '1px solid #e5e7eb', // 👈 vertical line in header
-                      },
-                      '.MuiDataGrid-row': {
-                        borderBottom: '1px solid #f0f9ff',
-                      },
-                      '.MuiDataGrid-row:hover': {
-                        backgroundColor: '#f0f9ff',
-                      },
-                      '.MuiDataGrid-row:nth-of-type(even)': {
-                        backgroundColor: '#f8fafc',
-                      },
-                      '.MuiCheckbox-root': {
-                        color: '#3b82f6',
-                        padding: '2px',
-                      },
-                      '.MuiDataGrid-footerContainer': {
-                        borderTop: '1px solid #e5e7eb',
-                        backgroundColor: '#f8fafc',
-                      },
-                      '.MuiTablePagination-root': {
-                        fontSize: '0.75rem',
-                      },
-                    }}
-                      initialState={{
-                        pagination: {
-                          paginationModel: { pageSize: 5, page: 0 },
-                        },
-                      }}
-                      pageSizeOptions={[5, 10]}
-                    />
+                            rows={statSubData}
+                            columns={columns}
+                            getRowId={(row) => row.substationary_id}
+                            checkboxSelection
+                            onRowSelectionModelChange={(ids) => setSelectedRowIds(ids)}
+                            sx={{
+                            border: 0,
+                            '.MuiDataGrid-columnHeaders': {
+                                backgroundColor: '#dbeafe', // light blue
+                                color: '#1e40af',
+                                fontWeight: 'bold',
+                                fontSize: '0.75rem',
+                                borderBottom: '1px solid #e5e7eb',
+                            },
+                            '.MuiDataGrid-cell': {
+                                fontSize: '0.75rem',
+                                padding: '4px 8px',
+                                borderRight: '1px solid #e5e7eb', // 👈 vertical line
+                            },
+                            '.MuiDataGrid-columnHeader': {
+                                borderRight: '1px solid #e5e7eb', // 👈 vertical line in header
+                            },
+                            '.MuiDataGrid-row': {
+                                borderBottom: '1px solid #f0f9ff',
+                            },
+                            '.MuiDataGrid-row:hover': {
+                                backgroundColor: '#f0f9ff',
+                            },
+                            '.MuiDataGrid-row:nth-of-type(even)': {
+                                backgroundColor: '#f8fafc',
+                            },
+                            '.MuiCheckbox-root': {
+                                color: '#3b82f6',
+                                padding: '2px',
+                            },
+                            '.MuiDataGrid-footerContainer': {
+                                borderTop: '1px solid #e5e7eb',
+                                backgroundColor: '#f8fafc',
+                            },
+                            '.MuiTablePagination-root': {
+                                fontSize: '0.75rem',
+                            },
+                            }}
+                            initialState={{
+                            pagination: {
+                                paginationModel: { pageSize: 5, page: 0 },
+                            },
+                            }}
+                            pageSizeOptions={[5, 10]}
+                        />
                   </Paper>
-                  ):(
-                    <div className="text-center bg-gradient-to-r from-red-500 to-yellow-300 text-white px-2 py-1 rounded">Overall Process is Completed</div>
-                  )}
                 </div>
               </div>
           </div>
         </div>
       </div>
-      {showModal && <Modal onClose={() => setShowModal(false)}/>}
+
+      {showModal && <Modal onClose={() => setShowModal(false)} />}
     </div>
   );
 };
 
-export default StationeryApproverForm;
+export default StationaryStoreApproval;

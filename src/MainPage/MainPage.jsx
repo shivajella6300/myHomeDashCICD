@@ -91,12 +91,12 @@ const MainPage = () => {
      {/* App Links Section - Responsive Grid Layout */}
 <div className="col-span-12 lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-4 mt-24 md:mt-32 lg:mt-40 p-2">
   
- {/* INTRANET */}
+{/* INTRANET */}
 <Link to="/login">
   <div
     className="w-full max-w-[240px] mx-auto h-20 rounded-xl border border-orange-300 shadow-[0_0_12px_2px_rgba(234,88,12,0.7)] hover:scale-105 transition-transform duration-300 flex items-center justify-center bg-[#FCE7C8]"
     style={{ borderColor: "#FFB266" }}
-  >
+    >
     {/* Flex container with Icon + Divider + Text */}
     <div className="flex items-center space-x-4">
       

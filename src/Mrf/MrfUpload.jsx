@@ -36,7 +36,7 @@ const FileUpload = () => {
     formData.append('PlantCode', plantCode);
 
     try {
-      const response = await fetch('http://172.20.0.12:8085/StationeryApis/api/manpower-upload', {
+      const response = await fetch('http://127.0.0.1:8000/api/manpower-upload', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${userToken.token}`,
@@ -65,7 +65,7 @@ const FileUpload = () => {
       {/* Header with logo, heading, and back icon */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-2">
-          <img src="/mrflogo.png" alt="Logo" className="h-12 w-16 object-contain" />
+          <img src="./mrflogo.png" alt="Logo" className="h-12 w-16 object-contain" />
           <h2 className="text-xl font-bold text-blue-600">Manpower Upload Form</h2>
         </div>
         <ArrowBackIcon

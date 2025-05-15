@@ -4,23 +4,23 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
 import { DataGrid } from '@mui/x-data-grid';
 import { Box, Paper } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
 import 'sweetalert2/dist/sweetalert2.min.css';
-import { PieChart, Pie, Cell, Legend } from 'recharts';
+
 import {
   ChartBarIcon,
   ClockIcon,
   CheckCircleIcon as HeroCheckCircleIcon,
   XCircleIcon
 } from '@heroicons/react/24/solid';
-import { BarChart, XAxis, YAxis, Tooltip, Bar } from 'recharts';
+
 import { TextField, InputAdornment } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import { Doughnut } from 'react-chartjs-2';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { FaCheckCircle, FaExclamationCircle, FaTimesCircle, FaChartPie } from 'react-icons/fa';
+import { Chart as ChartJS, ArcElement, Tooltip as ChartTooltip, Legend as ChartLegend,} from 'chart.js';
 
-
-
-const COLORS = ['#67AE6E', '#FF6363']; // Approval = Blue, Reject = Red
+ChartJS.register(ArcElement, ChartTooltip, ChartLegend);
 
 const Inbox = () => {
   const [searchText, setSearchText] = useState('');
@@ -32,25 +32,12 @@ const Inbox = () => {
 
   const [userToken] = useState(() => JSON.parse(localStorage.getItem('userInfo')) || {});
 
-  const mockData = [
-    { stationary_id: 1, name: "Alice", email: "alice@example.com", RaiserFor: "Manager A", Status: "Pending", case_id: 101 },
-    { stationary_id: 2, name: "Bob", email: "bob@example.com", RaiserFor: "Manager B", Status: "Completed", case_id: 102 },
-    { stationary_id: 3, name: "Charlie", email: "charlie@example.com", RaiserFor: "Manager C", Status: "Completed", case_id: 103 },
-    { stationary_id: 4, name: "David", email: "david@example.com", RaiserFor: "Manager A", Status: "Pending", case_id: 104 },
-    { stationary_id: 5, name: "Alice", email: "alice@example.com", RaiserFor: "Manager A", Status: "Pending", case_id: 101 },
-    { stationary_id: 6, name: "Bob", email: "bob@example.com", RaiserFor: "Manager B", Status: "Completed", case_id: 102 },
-    { stationary_id: 7, name: "Charlie", email: "charlie@example.com", RaiserFor: "Manager C", Status: "Pending", case_id: 103 },
-    { stationary_id: 8, name: "David", email: "david@example.com", RaiserFor: "Manager A", Status: "Pending", case_id: 104 },
-    { stationary_id: 9, name: "Alice", email: "alice@example.com", RaiserFor: "Manager A", Status: "Completed", case_id: 101 },
-    { stationary_id: 10, name: "Bob", email: "bob@example.com", RaiserFor: "Manager B", Status: "Completed", case_id: 102 },
-    { stationary_id: 11, name: "Charlie", email: "charlie@example.com", RaiserFor: "Manager C", Status: "Pending", case_id: 103 },
-    { stationary_id: 12, name: "David", email: "david@example.com", RaiserFor: "Manager A", Status: "Pending", case_id: 104 },
-  ];
-
-  const fetchData = async () => {
+  // Keep backend connection from first code
+  const fetchData = async () => 
+    {
     setLoading(true);
     try {
-      const response = await axios.get('http://172.20.0.12:8085/StationeryApis/api/getData', {
+      const response = await axios.get('http://127.0.0.1:8000/api/getData', {
         headers: {
           "Content-Type": "application/json",
           Accept: 'application/json',
@@ -62,14 +49,14 @@ const Inbox = () => {
       setData(responseData.length ? responseData : mockData);
     } catch (error) {
       console.error("Error fetching data. Using mock:", error);
-      setData(mockData);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    setTimeout(() => {
+    setTimeout(() =>
+    {
       fetchData();
     }, 1000);
   }, []);
@@ -84,22 +71,22 @@ const Inbox = () => {
 
   const handleSearch = (e) => {
     setSearchText(e.target.value);
-    setPaginationModel(prev => ({ ...prev, page: 0 }));
+    setPaginationModel(prev => ({...prev, page: 0}));
   };
 
- const  handleButtonClick=(case_id)=>{
-  try
+  const handleButtonClick = (case_id) => 
   {
-    navigate(`/StationaryApprover/${case_id}`)
-  }catch(err){
-    console.err("Error In The Getting the Data")
-  }
+    try {
+      navigate(`/StationaryApprover/${case_id}`)
+    } catch(err) {
+      console.error("Error In The Getting the Data")
+    }
   }
 
   const filteredRows = useMemo(() => {
     const lowerSearch = searchText.toLowerCase();
     return data
-      .filter(row => [ "Pending"].includes(row.Status))
+      .filter(row => ["Pending"].includes(row.Status))
       .filter(row =>
         `${row.name} ${row.email} ${row.RaiserFor} ${row.Status}`.toLowerCase().includes(lowerSearch)
       );
@@ -115,39 +102,72 @@ const Inbox = () => {
     fetchData();
   };
 
-  const actionStyle = (color) => ({
-    width: '80px',
-    height: '28px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    bgcolor: `${color}.main`,
-    color: 'white',
-    borderRadius: '4px',
-    fontSize: '12px',
-    fontWeight: 500,
-    cursor: 'pointer',
-    gap: '4px',
-    '&:hover': {
-      bgcolor: `${color}.dark`,
-    }
-  });
+  // Calculate status counts for charts
+  const statusCounts = useMemo(() => {
+    const counts = {
+      total: data.length,
+      completed: 0,
+      pending: 0,
+      rejected: 0,
+    };
 
-  const pending = data.filter(d => d.Status === 'Pending').length;
-  const completed = data.filter(d => d.Status === 'Completed').length;
+    data.forEach(item => {
+      const status = item.Status?.toLowerCase();
+      if (status === 'completed') counts.completed += 1;
+      else if (status === 'pending') counts.pending += 1;
+      else if (status === 'rejected') counts.rejected += 1;
+    });
 
-  const chartData = [
-    { name: 'Completed', value: completed },
-    { name: 'Pending', value: pending }
+    return counts;
+  }, [data]);
+
+  const donutData = {
+    labels: ['completed', 'pending'],
+    datasets: [
+      {
+        data: [60, 40],
+        backgroundColor: ['#67AE6E', '#F5C45E'],
+        hoverBackgroundColor: ['#328E6E', '#E78B48'],
+      },
+    ],
+  };
+  
+  const donutOptions = {
+    plugins: {
+      legend: {
+        labels: {
+          font: {
+            size: 10, // Adjust the font size for legend labels
+          },
+        },
+      },
+      tooltip: {
+        titleFont: { size: 10 },
+        bodyFont: { size: 10 },
+      },
+      // Modify the labels inside the donut chart
+      datalabels: {
+        color: 'white', // You can set this to the color you want
+        font: {
+          size: 12,  // Reduced font size inside the donut
+          weight: 'bold',
+        },
+        formatter: (value, context) => {
+          const label = context.chart.data.labels[context.dataIndex];
+          return `${label}: ${value}%`; // Show percentage with label
+        },
+      },
+    },
+    maintainAspectRatio: false, // optional for tighter fit
+  };
+  
+  
+  const stackedBarData = [
+    { name: 'Mon', completed: 40, pending: 30 },
+   
   ];
-  const barChartData = [
-    {
-      name: 'Status',
-      Pending: pending,
-      Completed: completed
-    }
-  ];
-  //Approve
+
+  // DataGrid columns from first code with improvements
   const columns = [
     {
       field: 'sno',
@@ -169,10 +189,7 @@ const Inbox = () => {
       headerName: 'BUTTON',
       width: 130,
       renderCell: (params) => {
-        const handleClick = () => 
-        {
-          handleButtonClick(params.row.case_id);
-        };
+        const handleClick = () => handleButtonClick(params.row.case_id);
     
         return (
           <Box sx={{
@@ -184,42 +201,42 @@ const Inbox = () => {
           }}>
             <Box sx={{
               borderRadius: '5px',
-              backgroundColor: '#007bff', // Button background color (blue)
+              backgroundColor: '#007bff',
               color: 'white',
               fontWeight: 'bold',
-              width: '80px', // Adjust width as needed
-              height: '32px', // Adjust height as needed
+              width: '80px',
+              height: '32px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '14px', // Adjust font size as needed
+              fontSize: '14px',
               cursor: 'pointer',
               transition: 'background-color 0.3s ease',
               '&:hover': {
-                backgroundColor: '#0056b3', // Darker blue on hover
+                backgroundColor: '#0056b3',
               },
               '&:focus': {
                 outline: 'none',
               }
             }} onClick={handleClick}>
-              Open
+              OPEN
             </Box>
           </Box>
         );
       }
     },
-    { field: 'case_id',       headerName: 'CASE ID', width: 130 },
-    { field: 'emp_id',        headerName: 'EMP ID', width: 100 },
-    { field: 'name',          headerName: 'EMP_NAME', width: 180 },
+    { field: 'case_id', headerName: 'CASE ID', width: 130 },
+    { field: 'emp_id', headerName: 'EMP ID', width: 100 },
+    { field: 'name', headerName: 'EMP_NAME', width: 180 },
     {
-      field: 'process_name',
-      headerName: 'PROCESS_NAME',
+      field: 'process_name', 
+      headerName: 'PROCESS_NAME', 
       width: 100,
       valueGetter: () => 'Stationary'
     },
-    { field: 'RaiserFor',     headerName: 'APPROVAL', width: 100 },     
+    { field: 'current_user', headerName: 'APPROVAL', width: 100 },
     {
-      field: 'Status',
+      field: 'current_status',
       headerName: 'STATUS',
       width: 160,
       renderCell: (params) => {
@@ -227,7 +244,7 @@ const Inbox = () => {
         const getBackgroundColor = (status) => {
           switch (status) {
             case 'Completed': return 'green';
-            case 'Pending': return '#ff9800';
+            case 'TO_DO': return '#ff9800';
             default: return '#bdbdbd';
           }
         };
@@ -257,182 +274,248 @@ const Inbox = () => {
         );
       },
     },
-    { field: 'logs', headerName: 'LOGS', width: 200 },
-    { field: 'created_at', headerName: 'CREATED_AT', width: 200 },
+    { field: 'hod_aprvl_date', headerName: 'LOGS', width: 200 },
+    { field: 'raiser_date', headerName: 'Raiser_Date', width: 200 },
   ];
-
 
   return (
     <>
-      <div style={{
-        height: '160px',
+      {/* Dashboard tiles from second code */}
+      <div
+      style={{
+        height: '180px',
         width: '100%',
         backgroundColor: 'white',
         borderBottom: '10px solid #ddd',
         display: 'flex',
+        flexWrap: 'wrap',
         alignItems: 'center',
-        padding: '0 16px'
-      }}>
-        <div className="flex w-full justify-between items-center">
-          <div className="w-1/4 flex items-start justify-start h-[140px] px-4">
-            <PieChart width={120} height={140}>
-              <Pie
-                data={chartData}
-                cx="40%"
-                cy="45%"
-                innerRadius={28}
-                outerRadius={42}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Legend verticalAlign="bottom" height={20} iconSize={8} wrapperStyle={{ fontSize: '10px', marginTop: '-10px' }} />
-            </PieChart>
-            <div className="flex flex-col pl-4 ml-2 border-l border-gray-400 h-full  justify-center">
-              <div className="text-sm font-bold p-2 rounded bg-blue-300 text-blue-1000">
-                TOTAL: {pending + completed}
-              </div>
-              <div className="border-t border-gray-500 my-1 w-full" />
-              <div className="text-xs p-2 rounded bg-yellow-300 text-yellow-1000">
-                Pending: {pending}
-              </div>
-              <div className="text-xs p-2 rounded bg-green-300 text-green-1000">
-                Completed: {completed}
-              </div>
-            </div>
-           
-                    <div className="w-[80px] flex flex-col pl-4 ml-2 border-l border-gray-400 h-full  justify-center">
-                    <BarChart width={120} height={140} data={barChartData}>
-                    <XAxis dataKey="name" hide />
-                    <YAxis hide />
-                    <Tooltip />
-                    <Legend
-                      content={({ payload }) => (
-                        <ul className="flex justify-center space-x-2 text-[10px]">
-                          {payload.map((entry, index) => (
-                            <li key={`item-${index}`} className="flex items-center space-x-1">
-                              <span
-                                className="w-2 h-2 rounded"
-                                style={{ backgroundColor: entry.color }}
-                              />
-                              <span>{entry.value}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    />
-                    <Bar dataKey="Pending" stackId="a" fill="#facc15" barSize={20} />
-                    <Bar dataKey="Completed" stackId="a" fill="#22c55e" barSize={20} />
-                  </BarChart>
-
-                   </div>
-
-      </div>
-      <div className="w-3/4 h-[140px] p-4 rounded-xl flex justify-between items-center gap-4">
-  {/* Total */}
-  <div className="flex-1 h-full rounded-lg bg-blue-500 flex items-center text-white font-semibold px-3">
-    {/* Left side */}
-    <div className="flex flex-col items-start justify-center w-1/2">
-      <ChartBarIcon className="h-8 w-8 mb-2" />
-      <span>Total</span>
-    </div>
-
-    {/* Vertical divider */}
-    <div className="w-[1px] h-16 bg-white mx-3" />
-
-    {/* Right side (white box) */}
-    <div className="bg-white rounded p-2 text-blue-600 font-bold w-1/2 text-center">
-      120
-    </div>
-  </div>
-
-  {/* Pending */}
-  <div className="flex-1 h-full rounded-lg bg-yellow-500 flex items-center text-white font-semibold px-3">
-    <div className="flex flex-col items-start justify-center w-1/2">
-      <ClockIcon className="h-8 w-8 mb-2" />
-      <span>Pending</span>
-    </div>
-    <div className="w-[1px] h-16 bg-white mx-3" />
-    <div className="bg-white rounded p-2 text-yellow-600 font-bold w-1/2 text-center">
-      45
-    </div>
-  </div>
-
-  {/* Completed */}
-  <div className="flex-1 h-full rounded-lg bg-green-500 flex items-center text-white font-semibold px-3">
-    <div className="flex flex-col items-start justify-center w-1/2">
-      <HeroCheckCircleIcon className="h-8 w-8 mb-2" />
-      <span>Completed</span>
-    </div>
-    <div className="w-[1px] h-16 bg-white mx-3" />
-    <div className="bg-white rounded p-2 text-green-600 font-bold w-1/2 text-center">
-      65
-    </div>
-  </div>
-
-  {/* Rejected */}
-  <div className="flex-1 h-full rounded-lg bg-red-500 flex items-center text-white font-semibold px-3">
-    <div className="flex flex-col items-start justify-center w-1/2">
-      <XCircleIcon className="h-8 w-8 mb-2" />
-      <span>Rejected</span>
-    </div>
-    <div className="w-[1px] h-16 bg-white mx-3" />
-    <div className="bg-white rounded p-2 text-red-600 font-bold w-1/2 text-center">
-      10
-    </div>
-  </div>
-</div>
-
-
-
-
-        </div>
-      </div>
-
-      <Paper sx={{ width: '100%', padding: 2 }}>
-      <TextField
-      variant="outlined"
-      placeholder="Search..."
-      value={searchText}
-      onChange={handleSearch}
-      sx={{ width: '300px', mb: 2 }}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <SearchIcon />
-          </InputAdornment>
-        ),
-        style: {
-          fontSize: '14px',
-          borderRadius: '8px'
-        }
+        padding: '0 16px',
+        boxSizing: 'border-box',
+        gap: '10px',
       }}
-/>
+    >
+      {[...Array(7)].map((_, index) => {
+        const tileStyle = {
+          flex: '1 1 11.28%',
+          minWidth: '100px',
+          height: '150px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          fontSize: '14px',
+          padding: '10px',
+          boxSizing: 'border-box',
+          color: 'white',
+          border: '1px solid #ccc',
+          borderRadius: '12px',
+          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+          cursor: 'pointer',
+          backgroundColor: '#ffffff', // default white
+          ...(index === 3 && { backgroundColor: '#87CEEB' }), // Total - sky blue
+          ...(index === 4 && { backgroundColor: '#22c55e' }), // Completed - green
+          ...(index === 5 && { backgroundColor: '#facc15', color: 'black' }), // Pending - yellow
+          ...(index === 6 && { backgroundColor: '#ef4444' }), // Rejected - red
+        };
 
-<DataGrid
-  rows={filteredRows}
-  columns={columns}
-  getRowId={(row) => row.stationary_id}
-  loading={loading}
-  autoHeight
-  paginationModel={paginationModel}
-  onPaginationModelChange={setPaginationModel}
-  pageSizeOptions={[5, 10, 20]}
-  sx={{
-    '& .MuiDataGrid-columnHeaders': {
-      backgroundColor: '#f3f4f6',
-      fontWeight: 'bold',
-    },
-    '& .MuiDataGrid-row:hover': {
-      backgroundColor: '#f0f9ff',
-    },
-    fontSize: '13px'
-  }}
-/>
+        return (
+          <div
+            key={index}
+            className="tile"
+            style={tileStyle}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.03)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
+            {index === 0 ? (
+              <Doughnut data={donutData} options={donutOptions} />
+            ) : index === 1 ? (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  height: '100%',
+                  width: '100%',
+                }}
+              >
+                <div style={{ backgroundColor: '#C68EFD', padding: '8px', border: '1px solid #ccc', color: '#000' , fontSize: '10px' }}>
+                  TOTAL:40
+                </div>
+                <div style={{ backgroundColor: '#A0C878', padding: '8px', border: '1px solid #ccc', color: '#000',fontSize: '10px' }}>
+                  COMPLETED:20
+                </div>
+                <div style={{ backgroundColor: '#FFF085', padding: '8px', border: '1px solid #ccc', color: '#000',fontSize: '10px' }}>
+                 PENDING:20
+                </div>
+              </div>
+            ) : index === 2 ? (
+              <BarChart width={50} height={150} data={stackedBarData}>
+              {/* Removed <CartesianGrid /> */}
+              <XAxis dataKey="name" hide />
+              <YAxis hide />
+              <Tooltip />
+              <Bar dataKey="completed" stackId="a" fill="#22c55e" />
+              <Bar dataKey="pending" stackId="a" fill="#facc15" />
+            </BarChart>
 
+            ) :  index === 3 ? (
+              <div style={{
+                display: 'flex', 
+                alignItems: 'flex-start', // Aligns content to the top
+                gap: '8px', 
+                justifyContent: 'flex-start', 
+                marginTop: '10px'  // Optional: adds space from the top
+              }}>
+                <FaChartPie size={30} />
+                <div>
+                  <span>Total</span>
+                  {/* Additional div for the value */}
+                  <div style={{
+                    backgroundColor: 'white', 
+                    color: 'black', 
+                    padding: '4px 8px', 
+                    borderRadius: '4px', 
+                    fontSize: '14px',
+                    marginTop: '4px', // Space between the label and the value
+                    width:'40px'
+                  }}>
+                    40 {/* Example value */}
+                  </div>
+                </div>
+              </div>
+            ) : index === 4 ? (
+              <div style={{
+                display: 'flex', 
+                alignItems: 'flex-start', 
+                gap: '8px', 
+                justifyContent: 'flex-start', 
+                marginTop: '10px'
+              }}>
+                <FaCheckCircle size={30} />
+                <div>
+                <span style={{ fontSize: '12px' }}>Completed</span>
+
+                  {/* Additional div for the value */}
+                  <div style={{
+                    backgroundColor: 'white', 
+                    color: 'black', 
+                    padding: '4px 8px', 
+                    borderRadius: '4px', 
+                    fontSize: '12px',
+                    marginTop: '4px' ,
+                    width:'40px'// Space between the label and the value
+                  }}>
+                    30 {/* Example value */}
+                  </div>
+                </div>
+              </div>
+            ) : index === 5 ? (
+              <div style={{
+                display: 'flex', 
+                alignItems: 'flex-start', 
+                gap: '8px', 
+                justifyContent: 'flex-start', 
+                color: 'white', 
+                marginTop: '10px'
+              }}>
+                <FaExclamationCircle size={30} />
+                <div>
+                  <span>Pending</span>
+                  {/* Additional div for the value */}
+                  <div style={{
+                    backgroundColor: 'white', 
+                    color: 'black', 
+                    padding: '4px 8px', 
+                    borderRadius: '4px', 
+                    fontSize: '14px',
+                    marginTop: '4px', // Space between the label and the value
+                    width:'40px'
+                  }}>
+                    10 {/* Example value */}
+                  </div>
+                </div>
+              </div>
+            ) : index === 6 ? (
+              <div style={{
+                display: 'flex', 
+                alignItems: 'flex-start', 
+                gap: '8px', 
+                justifyContent: 'flex-start', 
+                marginTop: '10px'
+              }}>
+                <FaTimesCircle size={30} />
+                <div>
+                  <span>Rejected</span>
+                  {/* Additional div for the value */}
+                  <div style={{
+                    backgroundColor: 'white', 
+                    color: 'black', 
+                    padding: '4px 8px', 
+                    borderRadius: '4px', 
+                    fontSize: '14px',
+                    marginTop: '4px' ,// Space between the label and the value
+                    width:'40px'
+                  }}>
+                    5 {/* Example value */}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+
+
+
+      {/* DataGrid section from both codes */}
+      <Paper sx={{ width: '100%', padding: 2 }}>
+        <TextField
+          variant="outlined"
+          placeholder="Search..."
+          value={searchText}
+          onChange={handleSearch}
+          sx={{ width: '300px', mb: 2 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+            style: {
+              fontSize: '14px',
+              borderRadius: '8px'
+            }
+          }}
+        />
+
+        <DataGrid
+          rows={data}
+          columns={columns}
+          getRowId={(row) => row.stationary_id}
+          loading={loading}
+          autoHeight
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          pageSizeOptions={[5, 10, 20]}
+          sx={{
+            '& .MuiDataGrid-columnHeaders': {
+              backgroundColor: '#f3f4f6',
+              fontWeight: 'bold',
+            },
+            '& .MuiDataGrid-row:hover': {
+              backgroundColor: '#f0f9ff',
+            },
+            fontSize: '13px'
+          }}
+        />
       </Paper>
     </>
   );

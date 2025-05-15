@@ -14,6 +14,9 @@ import Mrf from './Mrf/Mrf.jsx'; // Manpower Request Form import
 import MrfUpload from  './Mrf/MrfUpload.jsx';
 import MrfUploadList from './Mrf/MrfUploadList.jsx';
 import Inbox from './Inbox/Inbox.jsx';
+import StationaryStoreApproval from './Stationary/StationaryStoreApproval.jsx'
+import Participant from './Participants/Participant.jsx';
+import StatUploadForm from './Stationary/StatUploadForm.jsx';
 
 
 const MyContext = createContext();
@@ -169,6 +172,58 @@ function App() {
                 </div>
                 <div className={`contentRight py-4 px-4 ${isSidebarOpen === true ? 'w-[82%]' : 'w-[calc(100%-90px)]'} transition-all`}>
                   <StationaryApproverForm/>
+                </div>
+              </div>
+            </section>
+          )
+        },
+        {
+          path: '/StationaryStoreApproval/:case_id',
+          exact: true,
+          element: (
+            <section className='main'>
+              <Header/>
+              <div className='contentMain flex'>
+                <div className={`sidebarWapper ${isSidebarOpen === true ? 'w-[18%]' : 'w-[90px]'} transition-all`}>
+                  <Sidebar/>
+                </div>
+                <div className={`contentRight py-4 px-4 ${isSidebarOpen === true ? 'w-[82%]' : 'w-[calc(100%-90px)]'} transition-all`}>
+                  <StationaryStoreApproval/>
+                </div>
+              </div>
+            </section>
+          )
+        },
+         {
+          path: '/participants',
+          exact: true,
+          element: (
+            <section className='main'>
+              <Header/>
+              <div className='contentMain flex'>
+                <div className={`sidebarWapper ${isSidebarOpen === true ? 'w-[18%]' : 'w-[90px]'} transition-all`}>
+                  <Sidebar/>
+                </div>
+                <div className={`contentRight py-4 px-4 ${isSidebarOpen === true ? 'w-[82%]' : 'w-[calc(100%-90px)]'} transition-all`}>
+                  <Participant/>
+                </div>
+              </div>
+            </section>
+          )
+        }
+        ,
+         {
+          path: '/stationaryUpload',
+          exact: true,
+          element: (
+            <section className='main'>
+              <Header/>
+              <div className='contentMain flex'>
+                <div className={`sidebarWapper ${isSidebarOpen === true ? 'w-[18%]' : 'w-[90px]'} transition-all`}>
+                  <Sidebar/>
+                </div>
+                <div className={`contentRight py-4 px-4 ${isSidebarOpen === true ? 'w-[82%]' : 'w-[calc(100%-90px)]'} transition-all`}>
+                  <StatUploadForm/>
                 </div>
               </div>
             </section>

@@ -51,13 +51,13 @@ const DashboardBoxes = () => {
   };
 
   return (
-    <div className="min-h-screen p-6 bg-gray-50 relative">
+    <div className="min-h-screen pt-2 px-6 pb-6  relative">
       <div className="grid grid-cols-12 gap-4 bg-blue">
 
         {/* Left Section - Tiles */}
         <div className="col-span-12 lg:col-span-7">
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          
             {/* Meeting Room Blocking */}
             <Link to="/StationaryForm">
               <div className="box p-5 bg-white text-white rounded-xl cursor-pointer bg-gradient-to-br from-[#4183a5] via-[#56b2c4] to-[#139aed] hover:brightness-110 border border-[rgba(0,0,0,0.1)] flex items-center gap-4 transition-transform duration-300 transform hover:scale-105">
@@ -70,7 +70,7 @@ const DashboardBoxes = () => {
 
             {/* Stationery */}
             <Link to="/StationaryForm">
-              <div className="box p-5 bg-white text-white rounded-xl cursor-pointer bg-gradient-to-r from-[#c71d6f] to-[#d09693] hover:brightness-110 border border-[rgba(0,0,0,0.1)] flex items-center gap-4 transition-transform duration-300 transform hover:scale-105">
+              <div className="box h-full p-5 bg-white text-white rounded-xl cursor-pointer bg-gradient-to-r from-[#c71d6f] to-[#d09693] hover:brightness-110 border border-[rgba(0,0,0,0.1)] flex items-center gap-4 transition-transform duration-300 transform hover:scale-105">
                 <GiPencilRuler className="text-[40px] text-white" />
                 <div className="info w-[70%]">
                   <h3>Stationery</h3>

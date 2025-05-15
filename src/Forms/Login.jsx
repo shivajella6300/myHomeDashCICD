@@ -31,7 +31,7 @@ const Login = () => {
     e.preventDefault();
     try {
       const loginData = await axios.post(
-        "http://172.20.0.12:8085/StationeryApis/api/login",
+        "http://127.0.0.1:8000/api/login",
         formData,
         {
           headers: {
@@ -45,9 +45,10 @@ const Login = () => {
         token: loginData.data.token,
         Emp_Id: loginData.data.employee.Emp_Id,
         employee: loginData.data.employee.Employee_Name,
-        Email: loginData.data.employee.Email
+        Email: loginData.data.employee.Email,
+        Is_Employee: loginData.data.employee.Is_Employee,
+        Emp_Category:loginData.data.employee.Emp_Category
       };
-
       localStorage.setItem('userInfo', JSON.stringify(userInfo));
       navigate('/dashboard', { state: { refresh: true } });
     } catch (error) {
