@@ -17,6 +17,7 @@ import Inbox from './Inbox/Inbox.jsx';
 import StationaryStoreApproval from './Stationary/StationaryStoreApproval.jsx'
 import Participant from './Participants/Participant.jsx';
 import StatUploadForm from './Stationary/StatUploadForm.jsx';
+import HrForm from './Stationary/HrForm.jsx';
 
 
 const MyContext = createContext();
@@ -213,7 +214,7 @@ function App() {
         }
         ,
          {
-          path: '/stationaryUpload',
+          path: '/StatUploadForm',
           exact: true,
           element: (
             <section className='main'>
@@ -228,7 +229,25 @@ function App() {
               </div>
             </section>
           )
-        }
+        },
+
+        // {
+        //   path: '/HrForm',
+        //   exact: true,
+        //   element: (
+        //     <section className='main'>
+        //       <Header/>
+        //       <div className='contentMain flex'>
+        //         <div className={`sidebarWapper ${isSidebarOpen === true ? 'w-[18%]' : 'w-[90px]'} transition-all`}>
+        //           <Sidebar/>
+        //         </div>
+        //         <div className={`contentRight py-4 px-4 ${isSidebarOpen === true ? 'w-[82%]' : 'w-[calc(100%-90px)]'} transition-all`}>
+        //           <HrForm/>
+        //         </div>
+        //       </div>
+        //     </section>
+        //   )
+        // }
       ],
     },
   ], {

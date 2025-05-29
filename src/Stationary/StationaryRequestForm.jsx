@@ -2,17 +2,30 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { HiTrash } from 'react-icons/hi';
 import Swal from 'sweetalert2';
+import SubStationary from '../SubStationaryItems/SubStationary';
 
 
-const StationeryRequestForm = () => 
+const StationeryRequestForm = () => {
+  const stationeryOptions =
   {
+    Standard: ["ERASERS (Nos.)", "SHARPENERS (Nos.)", "POST IT PAD SMALL - ALL COLOURS (Pads)", "WHITENER PEN (Nos.)", "PUNCHING MACHINE DP 600 (Nos.)",],
+    Projects:
+      [
+        "FEVISTICK BIG (Nos.)", "PLASTIC SCALE (Nos.)", "CUTTER - SMALL (Nos.)", "CD MARKER PENS (Nos.)", "HIGH LIGHTERS (GREEN) (Nos.)"
+      ],
+
+  };
+  const stationeryItems = [
+    "CALCULATOR (Nos.)", "JUM CLIP - SMALL (Pkts.)", "BINDING CLIPS - 15MM (Pkts.)", "PIN REMOVER SR 100 (Nos.)", "STAPLER SMALL (Nos.)", "STAPLER PINS SMALL (Nos.)", "PEN BLUE (Nos.)", "PEN BLACK (Nos.)", "PEN RED (Nos.)", "PENCIL (Nos.)", "ERASERS (Nos.)", "SHARPENERS (Nos.)", "POST IT PAD SMALL - ALL COLOURS (Pads)", "WHITENER PEN (Nos.)", "PUNCHING MACHINE DP 600 (Nos.)", "DIARY NOTE BOOK", "STEEL WATER BOTTLES(Nos.)"
+  ];
+
   const [userToken, setToken] = useState(() => {
     return JSON.parse(localStorage.getItem('userInfo')) || {};
   });
   // Initialize form data with user information from token
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
-    request_for: "",
+    request_for: userToken.Is_Employee === 0 ? "Standard" : "Self",
     name: userToken.employee || "",
     email: userToken.Email || "",
     emp_id: userToken.Emp_Id || "",
@@ -26,20 +39,19 @@ const StationeryRequestForm = () =>
   const [errors, setErrors] = useState({});
   const [attempted, setAttempted] = useState(false);
   const navigate = useNavigate();
-  
+
   // Set only today's date when form loads, clear localStorage on refresh
-  useEffect(() => 
-    {
+  useEffect(() => {
     // Check if this is a page refresh
-    const isPageRefresh = performance.navigation && 
+    const isPageRefresh = performance.navigation &&
       performance.navigation.type === 1;
-    
+
     // Alternative check for browsers that don't support performance.navigation
     if (isPageRefresh || document.referrer === document.location.href) {
       // Clear localStorage on page refresh
       localStorage.removeItem('stationeryFormDraft');
     }
-    
+
     // Always set today's date
     const today = new Date();
     const formattedDate = today.toISOString().split('T')[0];
@@ -54,8 +66,7 @@ const StationeryRequestForm = () =>
     const newErrors = {};
     const requiredFields = ['date', 'request_for', 'name', 'email', 'emp_id', 'department', 'hod_name'];
 
-    requiredFields.forEach(field => 
-    {
+    requiredFields.forEach(field => {
       if (!formData[field]) {
         newErrors[field] = `${field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} is required`;
       }
@@ -66,15 +77,15 @@ const StationeryRequestForm = () =>
     }
 
     // Validate each item in the items array
-    let hasItemError = false;
-    formData.items.forEach((item, index) => {
-      if (!item.stationary || !item.quantity) {
-        hasItemError = true;
+    let hasValidItems = false;
+    formData.items.forEach((item) => {
+      if (item.stationary && item.quantity) {
+        hasValidItems = true;
       }
     });
-    
-    if (hasItemError) {
-      newErrors.items = 'All stationery items must have both type and quantity selected';
+
+    if (!hasValidItems) {
+      newErrors.items = 'At least one stationery item must have both type and quantity selected';
     }
 
     setErrors(newErrors);
@@ -84,11 +95,11 @@ const StationeryRequestForm = () =>
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear the error for this field if it exists
     if (errors[name]) {
       setErrors(prev => {
-        const newErrors = {...prev};
+        const newErrors = { ...prev };
         delete newErrors[name];
         return newErrors;
       });
@@ -97,11 +108,11 @@ const StationeryRequestForm = () =>
 
   const handleRadioChange = (value) => {
     setFormData(prev => ({ ...prev, request_for: value }));
-    
+
     // Clear the error for this field if it exists
     if (errors.request_for) {
       setErrors(prev => {
-        const newErrors = {...prev};
+        const newErrors = { ...prev };
         delete newErrors.request_for;
         return newErrors;
       });
@@ -111,15 +122,16 @@ const StationeryRequestForm = () =>
   const handleItemChange = (e, index) => {
     const { name, value } = e.target;
     const updatedItems = [...formData.items];
+    console.log(updatedItems);
     updatedItems[index] = { ...updatedItems[index], [name]: value };
     setFormData(prev => ({ ...prev, items: updatedItems }));
-    
+
     // Clear the items error if all items now have values
     if (errors.items) {
       const allItemsValid = updatedItems.every(item => item.stationary && item.quantity);
       if (allItemsValid) {
         setErrors(prev => {
-          const newErrors = {...prev};
+          const newErrors = { ...prev };
           delete newErrors.items;
           return newErrors;
         });
@@ -146,7 +158,7 @@ const StationeryRequestForm = () =>
   const handleReset = () => {
     const today = new Date();
     const formattedDate = today.toISOString().split('T')[0];
-    
+
     setFormData({
       date: formattedDate,
       request_for: "",
@@ -159,7 +171,7 @@ const StationeryRequestForm = () =>
     });
     setErrors({});
     setAttempted(false);
-    
+
     // Clear the saved draft from localStorage
     localStorage.removeItem('stationeryFormDraft');
   };
@@ -167,73 +179,88 @@ const StationeryRequestForm = () =>
   const handleSaveAsDraft = () => {
     // Save form data to localStorage
     localStorage.setItem('stationeryFormDraft', JSON.stringify(formData));
-    
+
     // Show the draft modal
     setModalType("draft");
     setShowModal(true);
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setAttempted(true); // Mark that submission was attempted
-  const isValid = validateForm();
-  if (!isValid) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Validation Error',
-      text: 'Please check all required fields.',
-    });
-    return;
-  }
-  // Show confirmation dialog and wait for user response
-  const result = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'Do you want to approve this stationery request?',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Yes',
-    cancelButtonText: 'No',
-  });
-  // Only proceed if user confirmed
-  if (!result.isConfirmed) 
-  {
-    return; // User clicked "No", cancel submission
-  }
-  try {
-    const response = await fetch('http://127.0.0.1:8000/api/emp-stationary-store', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer ${userToken.token}`,
-      },
-      body: JSON.stringify(formData),
-    });
-    const data = await response.json();
-    if (response.ok) 
-      {
-      Swal.fire({
-        icon: 'success',
-        title: 'Success!',
-        text: data.success || 'Data stored successfully.',
-      });
-    } else {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setAttempted(true); // Mark that submission was attempted
+    const isValid = validateForm(); // Re-enable validation
+    if (!isValid) {
       Swal.fire({
         icon: 'error',
-        title: 'Submission Failed',
-        text: data.message || 'Something went wrong on the server.',
+        title: 'Validation Error',
+        text: 'Please check all required fields.',
+      });
+      return;
+    }
+    // Filter out any empty items before submission
+    const filteredItems = formData.items.filter(item => item.stationary && item.quantity);
+
+    // If no valid items remain after filtering, show an error
+    if (filteredItems.length === 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'No Items Selected',
+        text: 'Please select at least one stationery item with a quantity.',
+      });
+      return;
+    }
+
+    // Create a copy of formData with filtered items
+    const submissionData = {
+      ...formData,
+      items: filteredItems,
+    };
+    // Show confirmation dialog and wait for user response
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to approve this stationery request?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes',
+      cancelButtonText: 'No',
+    });
+    // Only proceed if user confirmed
+    if (!result.isConfirmed) {
+      return; // User clicked "No", cancel submission
+    }
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/emp-stationary-store', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Bearer ${userToken.token}`,
+        },
+        body: JSON.stringify(submissionData), // Use the filtered data
+      });
+      const data = await response.json();
+      if (response.ok) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Success!',
+          text: data.success || 'Data stored successfully.',
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Submission Failed',
+          text: data.message || 'Something went wrong on the server.',
+        });
+      }
+    } catch (error) {
+      console.error('Error in Storing Data', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Network Error',
+        text: 'Could not connect to the server.',
       });
     }
-  } catch (error) {
-    console.error('Error in Storing Data', error);
-    Swal.fire({
-      icon: 'error',
-      title: 'Network Error',
-      text: 'Could not connect to the server.',
-    });
-  }
-};
-
+  };
 
   const inputStyle = "w-full border border-blue-500 rounded-full p-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400";
   const highlightedInputStyle = "w-full border border-blue-500 rounded-full p-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 bg-blue-50";
@@ -244,12 +271,12 @@ const handleSubmit = async (e) => {
     if (errors[fieldName] && attempted) {
       return errorInputStyle;
     }
-    
+
     // Highlighted fields are date, name, email, emp_id
     if (['date', 'name', 'email', 'emp_id'].includes(fieldName)) {
       return highlightedInputStyle;
     }
-    
+
     return inputStyle;
   };
 
@@ -310,7 +337,7 @@ const handleSubmit = async (e) => {
               <div className="flex-grow flex justify-center">
                 {/* Heading inside a blue box */}
                 <div className="bg-[#83bcc9] px-5 py-1.5 rounded-lg inline-block -ml-20">
-                  <h1 className="text-xl font-bold text-white">Stationery Request Form</h1>
+                  <h1 className="text-xl font-bold text-white">{!(userToken.Is_Employee == 0) ? ("Stationery Request Form") : ("Stationery HR Request Form")}</h1>
                 </div>
               </div>
               <div>
@@ -400,38 +427,77 @@ const handleSubmit = async (e) => {
                   </div>
 
                   {/* Request For - Radio Buttons */}
-                  <div>
-                    <div className="flex items-center">
-                      <label className="w-1/3 text-indigo-800 font-bold text-xs">
-                        Request For<span className="text-red-500 ml-1">*</span>
-                      </label>
-                      <div className="flex gap-2">
-                        <label className="flex items-center cursor-pointer">
-                          <input
-                            type="radio"
-                            name="request_for"
-                            checked={formData.request_for === "Self"}
-                            onChange={() => handleRadioChange("Self")}
-                            className={`mr-1 h-3 w-3 ${errors.request_for && attempted ? "text-red-600" : "text-blue-600"}`}
-                          />
-                          <span className="text-sm">Self</span>
+                  {!(userToken.Is_Employee == 0) ?
+                    (<div>
+                      <div className="flex items-center">
+                        <label className="w-1/3 text-indigo-800 font-bold text-xs">
+                          Request For<span className="text-red-500 ml-1">*</span>
                         </label>
-                        <label className="flex items-center cursor-pointer">
-                          <input
-                            type="radio"
-                            name="request_for"
-                            checked={formData.request_for === "Others"}
-                            onChange={() => handleRadioChange("Others")}
-                            className={`mr-1 h-3 w-3 ml-8 ${errors.request_for && attempted ? "text-red-600" : "text-blue-600"}`}
-                          />
-                          <span className="text-sm">Others</span>
-                        </label>
+                        <div className="flex gap-2">
+                          <label className="flex items-center cursor-pointer">
+                            <input
+                              type="radio"
+                              checked
+                              name="request_for"
+                              // checked={formData.request_for === "Self"}
+                              onChange={() => handleRadioChange("Self")}
+                              className={`mr-1 h-3 w-3  ${errors.request_for && attempted ? "text-red-600" : "text-blue-600"}`}
+                            />
+                            <span className="text-sm">Self</span>
+                          </label>
+                          <label className="flex items-center cursor-pointer">
+                            <input
+                              type="radio"
+                              name="request_for"
+                              checked={formData.request_for === "Others"}
+                              onChange={() => handleRadioChange("Others")}
+                              className={`mr-1 h-3 w-3 ml-8 ${errors.request_for && attempted ? "text-red-600" : "text-blue-600"}`}
+                            />
+                            <span className="text-sm">Others</span>
+                          </label>
+                        </div>
                       </div>
-                    </div>
-                    {errors.request_for && attempted && (
-                      <div className="ml-1/3 pl-32 text-red-500 text-xs mt-0.5">{errors.request_for}</div>
-                    )}
-                  </div>
+                      {errors.request_for && attempted && (
+                        <div className="ml-1/3 pl-32 text-red-500 text-xs mt-0.5">{errors.request_for}</div>
+                      )}
+                    </div>)
+
+                    : (<div>
+                      <div className="flex items-start">
+                        <label className="w-1/3 text-indigo-800 font-bold text-xs">
+                          Stationery<span className="text-red-500 ml-1">*</span>
+                        </label>
+
+                        <div className="flex flex-col gap-1"> {/* reduced gap from 2 to 1 */}
+                          {["Standard", "Projects", "Other"].map((option) => (
+                            <label key={option} className="flex items-center space-x-1 cursor-pointer text-xs  font-bold "> {/* smaller font */}
+                              <input
+                                type="radio"
+                                name="request_for"
+                                checked={formData.request_for === option}
+                                onChange={() => handleRadioChange(option)}
+                                className={`  h-3 w-3 ${errors.request_for && attempted ? "text-red-600" : "text-blue-600"}`}
+                              />
+                              <span>
+                                {option === "Standard"
+                                  ? "Welcome Kit For Standard"
+                                  : option === "Projects"
+                                    ? "Welcome Kit For Projects"
+                                    : "Other Stationery"}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {errors.request_for && attempted && (
+                        <div className="ml-1/3 pl-32 text-red-500 text-xs mt-0.5">
+                          {errors.request_for}
+                        </div>
+                      )}
+                    </div>)
+                  }
+
                   {/* Employee ID field */}
                   <div>
                     <div className="flex items-center">
@@ -479,9 +545,9 @@ const handleSubmit = async (e) => {
                   <div>
                     <div className="flex items-center">
                       <label className="w-1/3 text-indigo-800 font-bold text-xs">
-                        {!(userToken.Emp_Category=="HOD")?"Department HOD":"Stores"}<span className="text-red-500 ml-1">*</span>
+                        {!(userToken.Emp_Category == "HOD") ? "Department HOD" : "Stores"}<span className="text-red-500 ml-1">*</span>
                       </label>
-                      {!(userToken.Emp_Category=="HOD")?(                      <select
+                      {!(userToken.Emp_Category == "HOD") ? (<select
                         name="hod_name"
                         value={formData.hod_name}
                         onChange={handleChange}
@@ -491,7 +557,7 @@ const handleSubmit = async (e) => {
                         <option value="Durgapraveen.A">Durga Praveen</option>
                         <option value="Manisha.N">Manisha</option>
                         <option value="Siddardha.N">Siddartha</option>
-                      </select>):(                      <select
+                      </select>) : (<select
                         name="hod_name"
                         value={formData.hod_name}
                         onChange={handleChange}
@@ -512,7 +578,9 @@ const handleSubmit = async (e) => {
               {/* Stationery Items Section - Reduced Width */}
               <div className="mt-3 mx-6">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-indigo-800 font-bold text-base">Stationery Items<span className="text-red-500 ml-1">*</span></label>
+                  <label className="text-indigo-800 font-bold text-base">
+                    Stationery Items<span className="text-red-500 ml-1">*</span>
+                  </label>
                   <button
                     type="button"
                     onClick={handleAddItem}
@@ -522,87 +590,170 @@ const handleSubmit = async (e) => {
                   </button>
                 </div>
 
-                {/* Header with three equal columns */}
-                <div className="bg-blue-600 text-white grid grid-cols-3 p-1.5 rounded-t-lg text-sm font-medium">
-                  <div className="font-bold pr-2 border-r-2 border-white">Stationery Item</div>
-                  <div className="font-bold px-2 border-r-2 border-white">Quantity</div>
-                  <div className="font-bold pl-2">Available Quantity</div>
+                <div className="bg-blue-600 text-white grid grid-cols-2 p-1.5 rounded-t-lg text-sm font-medium">
+                  <div className="font-bold pr-5 border-r-2 border-white">Stationery Item</div>
+                  <div className="font-bold px-2">Quantity</div>
                 </div>
 
-                {/* Items with three equal columns */}
-                <div className="max-h-36 overflow-y-auto">
-                  {formData.items.map((item, index) => (
-                    <div key={index} className="grid grid-cols-3 border-b border-gray-300 p-1">
-                      <div className="pr-2 border-r-2 border-gray-300">
-                        <select
-                          name="stationary"
-                          value={item.stationary}
-                          onChange={(e) => handleItemChange(e, index)}
-                          className={errors.items && attempted ? errorInputStyle : inputStyle}
-                        >
-                          <option value="">Select</option>
-                          <option value="Notebook">Notebook</option>
-                          <option value="Pen">Pen</option>
-                          <option value="Folder">Folder</option>
-                          <option value="Marker">Marker</option>
-                        </select>
-                      </div>
-                     <div className="px-2 border-r-2 border-gray-300">
-                      {(() => {
-                        let quantityOptions = [];
+                {userToken.Is_Employee !== 0 ? (
+                  <div className="max-h-36 overflow-y-auto border rounded-b-md">
+                    {formData.items.map((item, index) => (
+                      <div key={index} className="grid grid-cols-2 border-b border-gray-300 p-1">
+                        <div className="pr-2 border-r-2 border-gray-300">
+                          <select
+                            name="stationary"
+                            value={item.stationary}
+                            onChange={(e) => handleItemChange(e, index)}
+                            className={errors.items && attempted ? errorInputStyle : inputStyle}
+                          >
+                            <option value="">Select</option>
+                            <option value="Notebook">Notebook</option>
+                            <option value="Pen">Pen</option>
+                            <option value="Folder">Folder</option>
+                            <option value="Marker">Marker</option>
+                          </select>
+                        </div>
 
-                        switch (userToken.Is_Employee) {
-                          case 0:
-                          case 1:
-                          case 2:
-                            quantityOptions = [1, 2];
-                            break;
-                          case 3:
-                            quantityOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-                            break;
-                          default:
-                            quantityOptions = [];
-                        }
-                        return (
+                        <div className="flex items-center px-2">
                           <select
                             name="quantity"
                             value={item.quantity}
                             onChange={(e) => handleItemChange(e, index)}
-                            className={errors.items && attempted ? errorInputStyle : inputStyle}
+                            className={`${errors.items && attempted ? errorInputStyle : inputStyle} flex-grow`}
                           >
                             <option value="">Qty</option>
-                            {quantityOptions.map((q) => (
+                            {(userToken.Is_Employee === 1 || userToken.Is_Employee === 2
+                              ? [1, 2]
+                              : userToken.Is_Employee === 3
+                                ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                                : []
+                            ).map((q) => (
                               <option key={q} value={q}>
                                 {q}
                               </option>
                             ))}
                           </select>
-                        );
-                      })()}
-                    </div>
 
-                      <div className="flex items-center pl-2">
-                        <input
-                          type="text"
-                          name="remarks"
-                          placeholder=""
-                          value={item.remarks || ''}
-                          onChange={(e) => handleItemChange(e, index)}
-                          className={`${inputStyle} flex-grow`}
-                        />
-                        {formData.items.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(index)}
-                            className="text-red-600 ml-1"
-                          >
-                            <HiTrash className="w-4 h-4" />
-                          </button>
-                        )}
+                          {formData.items.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveItem(index)}
+                              className="text-red-600 ml-2"
+                            >
+                              <HiTrash className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <div className="max-h-60 overflow-y-auto">
+                      {(formData.request_for === "Standard" || formData.request_for === "Projects") ? (
+                        <div className="max-h-98 overflow-y-auto border rounded-b-md">
+                          {stationeryOptions[formData.request_for].map((itemName, index) => (
+                            <div
+                              key={index}
+                              className="grid grid-cols-2 items-center border-b border-gray-300 py-[-5px] px-5 text-[13px]"
+                            >
+                              <div className="text-gray-700">{itemName}</div>
+                              <div>
+                                <select
+                                  name={`quantity-${index}`}
+                                  value=
+                                  {
+                                    formData.items.find(i => i.stationary === itemName)?.quantity || ""
+                                  }
+
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    let updatedItems = [...formData.items];
+                                    const existingIndex = updatedItems.findIndex(
+                                      i => i.stationary === itemName
+                                    );
+
+                                    if (value) { // Only add/update if a value is selected
+                                      if (existingIndex >= 0) {
+                                        updatedItems[existingIndex] = {
+                                          ...updatedItems[existingIndex],
+                                          stationary: itemName, // Ensure stationary is set
+                                          quantity: value,
+                                        };
+                                      } else {
+                                        updatedItems.push({
+                                          stationary: itemName,
+                                          quantity: value,
+                                          remarks: "",
+                                        });
+                                      }
+                                    } else if (existingIndex >= 0) {
+                                      // Remove the item if quantity is empty/unselected
+                                      updatedItems.splice(existingIndex, 1);
+                                    }
+
+                                    setFormData(prev => ({ ...prev, items: updatedItems }));
+                                  }}
+                                  className={`${inputStyle} w-full h-[27px] text-[8px] px-1`}>
+                                  <option value="">Select</option>
+                                  <option value="0">0</option>
+                                  <option value="1">1</option>
+                                </select>
+                              </div>
+
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="max-h-36 overflow-y-auto border rounded-b-md">
+                          {formData.items.map((item, index) => (
+                            <div
+                              key={index}
+                              className="grid grid-cols-2 items-center border-b border-gray-300 py-[2px] px-2 text-[10px]">
+                              <div className="pr-2 border-r border-gray-300">
+                                <select
+                                  name="stationary"
+                                  value={item.stationary}
+                                  onChange={(e) => handleItemChange(e, index)}
+                                  className={`${errors.items && attempted ? errorInputStyle : inputStyle} h-[28px] text-[8px] px-1 w-full`}
+                                >
+                                  <option value="">Select item</option>
+                                  {stationeryItems.map((itemName, i) => (
+                                    <option key={i} value={itemName}>
+                                      {itemName}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div className="flex items-center pl-2">
+                                <input
+                                  type="number"
+                                  name="quantity"
+                                  placeholder="Qty"
+                                  min={1}
+                                  max={10}
+                                  value={item.quantity || ''}
+                                  onChange={(e) => handleItemChange(e, index)}
+                                  className={`${inputStyle} h-[26px] text-[10px] px-1 w-full`}
+                                />
+                                {formData.items.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveItem(index)}
+                                    className="text-red-600 ml-1"
+                                  >
+                                    <HiTrash className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  </>
+                )}
                 {errors.items && attempted && (
                   <div className="text-red-500 text-xs mt-0.5">{errors.items}</div>
                 )}

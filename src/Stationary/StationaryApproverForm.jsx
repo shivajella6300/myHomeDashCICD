@@ -108,6 +108,15 @@ const StationeryApproverForm = () => {
       {
         "subStat":selectedData,"UserData":userData
       }
+      var url =null;
+      if(!(userToken.Is_Employee==2))//If the Employee is Not Stores 
+        {
+        url="stat-hod-aprvl";
+      }else
+      {//If the Employee is the Store here ----
+        url="stat-store-approval";
+      }
+
   // Show confirmation dialog and wait for user response
     const result = await Swal.fire({
       title: 'Are you sure?',
@@ -124,7 +133,7 @@ const StationeryApproverForm = () => {
     }
     try 
     {
-      const subStatUpdate = await fetch("http://127.0.0.1:8000/api/stat-hod-aprvl",
+      const subStatUpdate = await fetch(`http://127.0.0.1:8000/api/${url}`,
         {
           method:"POST",
           headers:{
@@ -408,7 +417,7 @@ const StationeryApproverForm = () => {
                             <input
                               type="radio"
                               name="request_for"
-                              checked={statData.request_for === "Others"}
+                              checked={statData.request_for === "Other"}
                               disabled
                               className={`mr-1 h-3 w-3 ml-8 ${errors.request_for && attempted ? "text-red-600" : "text-blue-600"}`}
                             />
@@ -466,7 +475,7 @@ const StationeryApproverForm = () => {
                     <div>
                       <div className="flex items-center">
                         <label className="w-1/3 text-indigo-800 font-bold text-xs">
-                          Department HOD<span className="text-red-500 ml-1">*</span>
+                         {(userToken.Is_Employee==2)?(<>Stores Department</>):(<>Department HOD</>)}<span className="text-red-500 ml-1">*</span>
                         </label>
                         <input
                           type="text"

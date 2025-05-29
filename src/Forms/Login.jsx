@@ -40,7 +40,7 @@ const Login = () => {
           }
         }
       );
-
+      console.log(loginData);
       const userInfo = {
         token: loginData.data.token,
         Emp_Id: loginData.data.employee.Emp_Id,

@@ -27,7 +27,9 @@ const getRandomData = () => labels.map(() => Math.floor(Math.random() * 100));
 
 const DashboardBoxes = () => {
   const [showNotification, setShowNotification] = useState(true);
-
+  const [useToken,setToken]=useState(()=>{
+    return JSON.parse(localStorage.getItem('userInfo'))?JSON.parse(localStorage.getItem('userInfo')):{}
+  })
   const chartData = {
     labels,
     datasets: [
@@ -122,6 +124,18 @@ const DashboardBoxes = () => {
             </div>
             </Link>
 
+            {/* StationeryUpload */}
+           
+          {useToken.Is_Employee==2?   
+          <Link to="/StatUploadForm">
+              <div className="box h-full p-5 bg-white text-white rounded-xl cursor-pointer bg-gradient-to-r from-[#c71d6f] to-[#d09693] hover:brightness-110 border border-[rgba(0,0,0,0.1)] flex items-center gap-4 transition-transform duration-300 transform hover:scale-105">
+                <GiPencilRuler className="text-[40px] text-white" />
+                <div className="info w-[70%]">
+                  <h3>Stationery Upload</h3>
+                </div>
+              </div>
+            </Link>:"" }
+            
           </div>
         </div>
 

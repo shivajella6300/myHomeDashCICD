@@ -5,14 +5,6 @@ import Swal from 'sweetalert2';
 import { DataGrid } from '@mui/x-data-grid';
 import { Box, Paper } from '@mui/material';
 import 'sweetalert2/dist/sweetalert2.min.css';
-
-import {
-  ChartBarIcon,
-  ClockIcon,
-  CheckCircleIcon as HeroCheckCircleIcon,
-  XCircleIcon
-} from '@heroicons/react/24/solid';
-
 import { TextField, InputAdornment } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { Doughnut } from 'react-chartjs-2';
@@ -29,7 +21,7 @@ const Inbox = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [paginationModel, setPaginationModel] = useState({ pageSize: 5, page: 0 });
-
+  
   const [userToken] = useState(() => JSON.parse(localStorage.getItem('userInfo')) || {});
 
   // Keep backend connection from first code
@@ -44,9 +36,9 @@ const Inbox = () => {
           Authorization: `Bearer ${userToken.token}`
         }
       });
-      const responseData = response.data?.data || [];
+      const responseData = response.data.allAprvls || [];
       console.log(responseData);
-      setData(responseData.length ? responseData : mockData);
+      setData(responseData);
     } catch (error) {
       console.error("Error fetching data. Using mock:", error);
     } finally {
@@ -64,7 +56,7 @@ const Inbox = () => {
   useEffect(() => {
     if (location.state?.refresh) fetchData();
   }, [location]);
-
+  
   useEffect(() => {
     if (!userToken.token) navigate('/');
   }, [navigate, userToken?.token]);
@@ -83,14 +75,21 @@ const Inbox = () => {
     }
   }
 
-  const filteredRows = useMemo(() => {
-    const lowerSearch = searchText.toLowerCase();
-    return data
-      .filter(row => ["Pending"].includes(row.Status))
-      .filter(row =>
-        `${row.name} ${row.email} ${row.RaiserFor} ${row.Status}`.toLowerCase().includes(lowerSearch)
-      );
-  }, [searchText, data]);
+  // Filter data based on search text - using implementation from Participant.js
+  const filteredData = useMemo(() => {
+    if (!searchText) return data;
+    
+    return data.filter(row => {
+      // Convert search text to lowercase for case-insensitive search
+      const search = searchText.toLowerCase();
+      
+      // Search across all fields in the row
+      return Object.entries(row).some(([key, value]) => {
+        // Only check string values
+        return typeof value === 'string' && value.toLowerCase().includes(search);
+      });
+    });
+  }, [data, searchText]);
 
   const handleApprove = async (case_id) => {
     Swal.fire("Approved!", `Case ID ${case_id} approved ✅`, "success");
@@ -102,19 +101,18 @@ const Inbox = () => {
     fetchData();
   };
 
-  // Calculate status counts for charts
+  // Calculate status counts for charts - Updated to use total count for pending
   const statusCounts = useMemo(() => {
     const counts = {
       total: data.length,
       completed: 0,
-      pending: 0,
+      pending: data.length, // Use total count for pending
       rejected: 0,
     };
 
     data.forEach(item => {
       const status = item.Status?.toLowerCase();
       if (status === 'completed') counts.completed += 1;
-      else if (status === 'pending') counts.pending += 1;
       else if (status === 'rejected') counts.rejected += 1;
     });
 
@@ -125,7 +123,7 @@ const Inbox = () => {
     labels: ['completed', 'pending'],
     datasets: [
       {
-        data: [60, 40],
+        data: [statusCounts.completed, statusCounts.pending],
         backgroundColor: ['#67AE6E', '#F5C45E'],
         hoverBackgroundColor: ['#328E6E', '#E78B48'],
       },
@@ -154,7 +152,7 @@ const Inbox = () => {
         },
         formatter: (value, context) => {
           const label = context.chart.data.labels[context.dataIndex];
-          return `${label}: ${value}%`; // Show percentage with label
+          return `${label}: ${value}`; // Show count with label
         },
       },
     },
@@ -163,23 +161,22 @@ const Inbox = () => {
   
   
   const stackedBarData = [
-    { name: 'Mon', completed: 40, pending: 30 },
-   
+    { name: 'Data', completed: statusCounts.completed, pending: statusCounts.pending },
   ];
-
+  
   // DataGrid columns from first code with improvements
   const columns = [
     {
-      field: 'sno',
+      field: 'SNO',
       headerName: 'S.NO',
-      width: 80,
+      flex: 0.5,
+      minWidth: 80,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
         const index = params.api.getRowIndexRelativeToVisibleRows(params.id);
         const pageSize = paginationModel.pageSize;
         const page = paginationModel.page;
-    
         const serialNumber = page * pageSize + index + 1;
         return serialNumber;
       }
@@ -187,10 +184,11 @@ const Inbox = () => {
     {
       field: 'btn',
       headerName: 'BUTTON',
-      width: 130,
+      flex: 1,
+      minWidth: 120,
       renderCell: (params) => {
-        const handleClick = () => handleButtonClick(params.row.case_id);
-    
+        const { CASEID, PROCESSNAME } = params.row;
+        const handleClick = () => handleButtonClick(CASEID, PROCESSNAME);
         return (
           <Box sx={{
             display: 'flex',
@@ -201,321 +199,295 @@ const Inbox = () => {
           }}>
             <Box sx={{
               borderRadius: '5px',
-              backgroundColor: '#007bff',
+              backgroundColor: '#007bff', // Button background color (blue)
               color: 'white',
               fontWeight: 'bold',
-              width: '80px',
-              height: '32px',
+              width: '80px', // Adjust width as needed
+              height: '24px', // Reduced height to match other table
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '14px',
+              fontSize: '12px', // Smaller font size to match other table
               cursor: 'pointer',
               transition: 'background-color 0.3s ease',
               '&:hover': {
-                backgroundColor: '#0056b3',
+                backgroundColor: '#0056b3', // Darker blue on hover
               },
               '&:focus': {
                 outline: 'none',
               }
             }} onClick={handleClick}>
-              OPEN
+              Open
             </Box>
           </Box>
         );
       }
     },
-    { field: 'case_id', headerName: 'CASE ID', width: 130 },
-    { field: 'emp_id', headerName: 'EMP ID', width: 100 },
-    { field: 'name', headerName: 'EMP_NAME', width: 180 },
-    {
-      field: 'process_name', 
-      headerName: 'PROCESS_NAME', 
-      width: 100,
-      valueGetter: () => 'Stationary'
-    },
-    { field: 'current_user', headerName: 'APPROVAL', width: 100 },
-    {
-      field: 'current_status',
-      headerName: 'STATUS',
-      width: 160,
-      renderCell: (params) => {
-        const status = params.value;
-        const getBackgroundColor = (status) => {
-          switch (status) {
-            case 'Completed': return 'green';
-            case 'TO_DO': return '#ff9800';
-            default: return '#bdbdbd';
-          }
-        };
-        return (
-          <Box sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            width: '100%',
-          }}>
-            <Box sx={{
-              borderRadius: '5px',
-              backgroundColor: getBackgroundColor(status),
-              color: 'white',
-              fontWeight: 'bold',
-              width: '100px',
-              height: '28px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-            }}>
-              {status}
-            </Box>
-          </Box>
-        );
-      },
-    },
-    { field: 'hod_aprvl_date', headerName: 'LOGS', width: 200 },
-    { field: 'raiser_date', headerName: 'Raiser_Date', width: 200 },
+    { field: 'CASEID', headerName: 'CASE ID', flex: 1, minWidth: 120 },
+    { field: 'PROCESSNAME', headerName: 'PROCESS', flex: 1, minWidth: 120 },
+    { field: 'CUR_TASK', headerName: 'CUR TASK', flex: 1.2, minWidth: 140 },
+    { field: 'PREV_USR', headerName: 'PREV USER', flex: 1, minWidth: 120 },     
   ];
 
   return (
     <>
-      {/* Dashboard tiles from second code */}
+      {/* Dashboard tiles section */}
       <div
-      style={{
-        height: '180px',
-        width: '100%',
-        backgroundColor: 'white',
-        borderBottom: '10px solid #ddd',
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        padding: '0 16px',
-        boxSizing: 'border-box',
-        gap: '10px',
-      }}
-    >
-      {[...Array(7)].map((_, index) => {
-        const tileStyle = {
-          flex: '1 1 11.28%',
-          minWidth: '100px',
-          height: '150px',
+        style={{
+          height: '180px',
+          width: '100%',
+          backgroundColor: 'white',
+          borderBottom: '10px solid #ddd',
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
+          flexWrap: 'wrap',
           alignItems: 'center',
-          fontSize: '14px',
-          padding: '10px',
+          padding: '0 16px',
           boxSizing: 'border-box',
-          color: 'white',
-          border: '1px solid #ccc',
-          borderRadius: '12px',
-          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-          cursor: 'pointer',
-          backgroundColor: '#ffffff', // default white
-          ...(index === 3 && { backgroundColor: '#87CEEB' }), // Total - sky blue
-          ...(index === 4 && { backgroundColor: '#22c55e' }), // Completed - green
-          ...(index === 5 && { backgroundColor: '#facc15', color: 'black' }), // Pending - yellow
-          ...(index === 6 && { backgroundColor: '#ef4444' }), // Rejected - red
-        };
-
-        return (
-          <div
-            key={index}
-            className="tile"
-            style={tileStyle}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.03)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+          gap: '10px',
+          border: '1px solid gray',
+          borderRadius: '8px',
+          marginBottom: '16px',
+        }}
+      >
+        {[...Array(7)].map((_, index) => {
+          const tileStyle = {
+            flex: '1 1 11.28%',
+            minWidth: '100px',
+            height: '150px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            fontSize: '14px',
+            padding: '10px',
+            boxSizing: 'border-box',
+            color: 'white',
+            border: '1px solid #ccc',
+            borderRadius: '12px',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            cursor: 'pointer',
+            backgroundColor: '#ffffff', // default white
+            ...(index === 3 && { backgroundColor: '#87CEEB' }), // Total - sky blue
+            ...(index === 4 && { backgroundColor: '#22c55e' }), // Completed - green
+            ...(index === 5 && { backgroundColor: '#facc15', color: 'black' }), // Pending - yellow
+            ...(index === 6 && { backgroundColor: '#ef4444' }), // Rejected - red
+          };
+          return (
+            <div
+              key={index}
+              className="tile"
+              style={tileStyle}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.03)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              {index === 0 ? (
+                <Doughnut data={donutData} options={donutOptions} />
+              ) : index === 1 ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    height: '100%',
+                    width: '100%',
+                  }}
+                >
+                  <div style={{ backgroundColor: '#C68EFD', padding: '8px', border: '1px solid #ccc', color: '#000', fontSize: '10px', fontWeight: 'bold' }}>
+                    TOTAL:{statusCounts.total}
+                  </div>
+                  <div style={{ backgroundColor: '#A0C878', padding: '8px', border: '1px solid #ccc', color: '#000', fontSize: '10px', fontWeight: 'bold' }}>
+                    COMPLETED:{statusCounts.completed}
+                  </div>
+                  <div style={{ backgroundColor: '#FFF085', padding: '8px', border: '1px solid #ccc', color: '#000', fontSize: '10px', fontWeight: 'bold' }}>
+                   PENDING:{statusCounts.pending}
+                  </div>
+                </div>
+              ) : index === 2 ? (
+                <BarChart width={50} height={150} data={stackedBarData}>
+                  <XAxis dataKey="name" hide />
+                  <YAxis hide />
+                  <Tooltip />
+                  <Bar dataKey="completed" stackId="a" fill="#22c55e" />
+                  <Bar dataKey="pending" stackId="a" fill="#facc15" />
+                </BarChart>
+              ) : index === 3 ? (
+                <div style={{
+                  display: 'flex', 
+                  alignItems: 'flex-start',
+                  gap: '8px', 
+                  justifyContent: 'flex-start', 
+                  marginTop: '10px'
+                }}>
+                  <FaChartPie size={30} />
+                  <div>
+                    <span style={{ fontWeight: 'bold' }}>Total</span>
+                    <div style={{
+                      backgroundColor: 'white', 
+                      color: 'black', 
+                      padding: '4px 8px', 
+                      borderRadius: '4px', 
+                      fontSize: '14px',
+                      marginTop: '4px',
+                      width: '40px'
+                    }}>
+                    {statusCounts.total}
+                    </div>
+                  </div>
+                </div>
+              ) : index === 4 ? (
+                <div style={{
+                  display: 'flex', 
+                  alignItems: 'flex-start', 
+                  gap: '8px', 
+                  justifyContent: 'flex-start', 
+                  marginTop: '10px'
+                }}>
+                  <FaCheckCircle size={30} />
+                  <div>
+                    <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Completed</span>
+                    <div style={{
+                      backgroundColor: 'white', 
+                      color: 'black', 
+                      padding: '4px 8px', 
+                      borderRadius: '4px', 
+                      fontSize: '12px',
+                      marginTop: '4px',
+                      width: '40px'
+                    }}>
+                    {statusCounts.completed}
+                    </div>
+                  </div>
+                </div>
+              ) : index === 5 ? (
+                <div style={{
+                  display: 'flex', 
+                  alignItems: 'flex-start', 
+                  gap: '8px', 
+                  justifyContent: 'flex-start', 
+                  color: 'white', 
+                  marginTop: '10px'
+                }}>
+                  <FaExclamationCircle size={30} />
+                  <div>
+                    <span style={{ fontWeight: 'bold' }}>Pending</span>
+                    <div style={{
+                      backgroundColor: 'white', 
+                      color: 'black', 
+                      padding: '4px 8px', 
+                      borderRadius: '4px', 
+                      fontSize: '14px',
+                      marginTop: '4px',
+                      width: '40px'
+                    }}>
+                    {statusCounts.pending}
+                    </div>
+                  </div>
+                </div>
+              ) : index === 6 ? (
+                <div style={{
+                  display: 'flex', 
+                  alignItems: 'flex-start', 
+                  gap: '8px', 
+                  justifyContent: 'flex-start', 
+                  marginTop: '10px'
+                }}>
+                  <FaTimesCircle size={30} />
+                  <div>
+                    <span style={{ fontWeight: 'bold' }}>Rejected</span>
+                    <div style={{
+                      backgroundColor: 'white', 
+                      color: 'black', 
+                      padding: '4px 8px', 
+                      borderRadius: '4px', 
+                      fontSize: '14px',
+                      marginTop: '4px',
+                      width: '40px'
+                    }}>
+                    {statusCounts.rejected}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+      
+      {/* DataGrid section with improved styling */}
+      <Paper sx={{
+        width: '100%',
+        padding: 2,
+        border: '1px solid gray',
+        borderRadius: '8px',
+      }}>
+        {/* Search bar */}
+        <Box sx={{ mb: 2, width: '70%' }}>
+          <TextField
+            variant="outlined"
+            size="small"
+            placeholder="Search..."
+            value={searchText}
+            onChange={handleSearch}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{color:'#8e7ad5'}}/>
+                </InputAdornment>
+              ),
             }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          >
-            {index === 0 ? (
-              <Doughnut data={donutData} options={donutOptions} />
-            ) : index === 1 ? (
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  height: '100%',
-                  width: '100%',
-                }}
-              >
-                <div style={{ backgroundColor: '#C68EFD', padding: '8px', border: '1px solid #ccc', color: '#000' , fontSize: '10px' }}>
-                  TOTAL:40
-                </div>
-                <div style={{ backgroundColor: '#A0C878', padding: '8px', border: '1px solid #ccc', color: '#000',fontSize: '10px' }}>
-                  COMPLETED:20
-                </div>
-                <div style={{ backgroundColor: '#FFF085', padding: '8px', border: '1px solid #ccc', color: '#000',fontSize: '10px' }}>
-                 PENDING:20
-                </div>
-              </div>
-            ) : index === 2 ? (
-              <BarChart width={50} height={150} data={stackedBarData}>
-              {/* Removed <CartesianGrid /> */}
-              <XAxis dataKey="name" hide />
-              <YAxis hide />
-              <Tooltip />
-              <Bar dataKey="completed" stackId="a" fill="#22c55e" />
-              <Bar dataKey="pending" stackId="a" fill="#facc15" />
-            </BarChart>
+          />
+        </Box>
 
-            ) :  index === 3 ? (
-              <div style={{
-                display: 'flex', 
-                alignItems: 'flex-start', // Aligns content to the top
-                gap: '8px', 
-                justifyContent: 'flex-start', 
-                marginTop: '10px'  // Optional: adds space from the top
-              }}>
-                <FaChartPie size={30} />
-                <div>
-                  <span>Total</span>
-                  {/* Additional div for the value */}
-                  <div style={{
-                    backgroundColor: 'white', 
-                    color: 'black', 
-                    padding: '4px 8px', 
-                    borderRadius: '4px', 
-                    fontSize: '14px',
-                    marginTop: '4px', // Space between the label and the value
-                    width:'40px'
-                  }}>
-                    40 {/* Example value */}
-                  </div>
-                </div>
-              </div>
-            ) : index === 4 ? (
-              <div style={{
-                display: 'flex', 
-                alignItems: 'flex-start', 
-                gap: '8px', 
-                justifyContent: 'flex-start', 
-                marginTop: '10px'
-              }}>
-                <FaCheckCircle size={30} />
-                <div>
-                <span style={{ fontSize: '12px' }}>Completed</span>
-
-                  {/* Additional div for the value */}
-                  <div style={{
-                    backgroundColor: 'white', 
-                    color: 'black', 
-                    padding: '4px 8px', 
-                    borderRadius: '4px', 
-                    fontSize: '12px',
-                    marginTop: '4px' ,
-                    width:'40px'// Space between the label and the value
-                  }}>
-                    30 {/* Example value */}
-                  </div>
-                </div>
-              </div>
-            ) : index === 5 ? (
-              <div style={{
-                display: 'flex', 
-                alignItems: 'flex-start', 
-                gap: '8px', 
-                justifyContent: 'flex-start', 
-                color: 'white', 
-                marginTop: '10px'
-              }}>
-                <FaExclamationCircle size={30} />
-                <div>
-                  <span>Pending</span>
-                  {/* Additional div for the value */}
-                  <div style={{
-                    backgroundColor: 'white', 
-                    color: 'black', 
-                    padding: '4px 8px', 
-                    borderRadius: '4px', 
-                    fontSize: '14px',
-                    marginTop: '4px', // Space between the label and the value
-                    width:'40px'
-                  }}>
-                    10 {/* Example value */}
-                  </div>
-                </div>
-              </div>
-            ) : index === 6 ? (
-              <div style={{
-                display: 'flex', 
-                alignItems: 'flex-start', 
-                gap: '8px', 
-                justifyContent: 'flex-start', 
-                marginTop: '10px'
-              }}>
-                <FaTimesCircle size={30} />
-                <div>
-                  <span>Rejected</span>
-                  {/* Additional div for the value */}
-                  <div style={{
-                    backgroundColor: 'white', 
-                    color: 'black', 
-                    padding: '4px 8px', 
-                    borderRadius: '4px', 
-                    fontSize: '14px',
-                    marginTop: '4px' ,// Space between the label and the value
-                    width:'40px'
-                  }}>
-                    5 {/* Example value */}
-                  </div>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        );
-      })}
-    </div>
-
-
-
-      {/* DataGrid section from both codes */}
-      <Paper sx={{ width: '100%', padding: 2 }}>
-        <TextField
-          variant="outlined"
-          placeholder="Search..."
-          value={searchText}
-          onChange={handleSearch}
-          sx={{ width: '300px', mb: 2 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-            style: {
-              fontSize: '14px',
-              borderRadius: '8px'
+        <Box sx={{
+          width: '100%',
+          height: '100%',
+          borderRadius: '10px',
+        }}>
+          <DataGrid
+            rows={filteredData}
+            columns={columns}
+            getRowId={(row) => row.SNO}
+            loading={loading}
+            getRowClassName={(params) =>
+              params.indexRelativeToCurrentPage % 2 === 0 ? 'even-row' : ''
             }
-          }}
-        />
-
-        <DataGrid
-          rows={data}
-          columns={columns}
-          getRowId={(row) => row.stationary_id}
-          loading={loading}
-          autoHeight
-          paginationModel={paginationModel}
-          onPaginationModelChange={setPaginationModel}
-          pageSizeOptions={[5, 10, 20]}
-          sx={{
-            '& .MuiDataGrid-columnHeaders': {
-              backgroundColor: '#f3f4f6',
-              fontWeight: 'bold',
-            },
-            '& .MuiDataGrid-row:hover': {
-              backgroundColor: '#f0f9ff',
-            },
-            fontSize: '13px'
-          }}
-        />
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            pageSizeOptions={[5, 10, 20]}
+            autoHeight={false}
+            rowHeight={30}
+            columnHeaderHeight={30}
+            sx={{
+              width: '100%',
+              height: '80%',
+              '& .MuiDataGrid-columnHeaders': {
+                backgroundColor: '#CDC1FF',
+              },
+              '& .MuiDataGrid-columnHeader': {
+                backgroundColor: '#CDC1FF',
+                fontWeight: 'bold',
+              },
+              '& .MuiDataGrid-columnHeaderTitle': {
+                fontWeight: 'bold',
+                color: '#000',
+              },
+              '& .MuiDataGrid-row:hover': {
+                backgroundColor: '#f0f9ff',
+              },
+              '& .even-row': {
+                backgroundColor: '#F2F2F2',
+              },
+              fontSize: '13px',
+              color: 'black',
+            }}
+          />
+        </Box>
       </Paper>
     </>
   );
