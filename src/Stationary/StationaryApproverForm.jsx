@@ -5,7 +5,8 @@ import { DataGrid } from '@mui/x-data-grid';
 import { Button, Paper, TextField } from '@mui/material';
 import Swal from 'sweetalert2'; // Import SweetAlert2
 
-const StationeryApproverForm = () => {
+const StationeryApproverForm = () => 
+{
   const { case_id } = useParams();
   const [statData, setStationaryData]=useState([]);
   const [errors,setError]=useState('');
@@ -31,9 +32,11 @@ const StationeryApproverForm = () => {
   
   const fetchDataByEmpId = async() => {
     try {
-      const getDataStBYEmpId = await fetch(`http://127.0.0.1:8000/api/gt-stat-userId/${case_id}`, {
+      const getDataStBYEmpId = await fetch(`http://127.0.0.1:8000/api/gt-stat-userId/${case_id}`, 
+      {
         method: "GET",
-        headers: {
+        headers: 
+        {
           "Content-Type": "application/json",
           Accept: "application/json",
           Authorization: `Bearer ${userToken.token}`,
@@ -64,8 +67,10 @@ const StationeryApproverForm = () => {
     }
   }
 
-  useEffect(() => {
-    if (case_id) {
+  useEffect(() => 
+  {
+    if (case_id) 
+    {
       fetchDataByEmpId();
     }
   }, [case_id]);
@@ -75,13 +80,13 @@ const StationeryApproverForm = () => {
     if (isPageRefresh || document.referrer === document.location.href) {
       localStorage.removeItem('stationeryFormDraft');
     }
-    
     const today = new Date();
     const formattedDate = today.toISOString().split('T')[0];
     setFormData(prev => ({...prev,date: formattedDate }));
   }, []);
 
-  const handleBack = () => {
+  const handleBack = () => 
+  {
     navigate('/StationaryList');
   };
   //Hod Approval
@@ -199,9 +204,9 @@ const StationeryApproverForm = () => {
         {
           method:"POST",
           headers:{
-            "Content-Type":"application/json",
-            "Accept":"application/json",
-            Authorization:  `Bearer ${userToken.token}`
+            "Content-Type" :  "application/json",
+            "Accept"       :  "application/json",
+            Authorization  :  `Bearer ${userToken.token}`
           },
           body:JSON.stringify(data)
         });
@@ -266,7 +271,7 @@ const StationeryApproverForm = () => {
       renderCell: (params) => (
         <TextField
           variant="standard"
-          value={params.row.Comments || ''}
+          value={params.row.Comments||''}
           onChange={(e) =>
             handleInputChange(params.row.substationary_id, e.target.value, 'Comments')
           }
@@ -482,7 +487,7 @@ const StationeryApproverForm = () => {
                           name="department"
                           value={statData.current_user}
                           readOnly
-                          className={errors.hod_name && attempted ? errorInputStyle : highlightedInputStyle}
+                          className={errors.hod_name &&attempted ? errorInputStyle : highlightedInputStyle}
                         />
                       </div>
                       {errors.hod_name && attempted && (
@@ -545,7 +550,7 @@ const StationeryApproverForm = () => {
                       value={statData.overall_comment}
                       readOnly
                       className={`${inputStyle} text-center pt-3 h-10 rounded-lg text-xs bg-gradient-to-r from-blue-500 to-blue-300 text-white px-2 py-1`}>
-                      {statData.hod_name?statData.overall_comment:"No Comment"}
+                      {statData.hod_name ? statData.overall_comment:"No Comment"}
                     </textarea>
                     </div>
                   </div>
@@ -557,7 +562,6 @@ const StationeryApproverForm = () => {
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-indigo-800 font-bold text-base ml-4">Stationery Items<span className="text-red-500 ml-1">*</span></label>
                 </div>
-                
                 <div className="mx-4">
                   <div className="flex gap-2 mb-2">
                     {!(statData.stores_status=="Approve")?(

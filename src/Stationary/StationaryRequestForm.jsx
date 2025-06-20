@@ -5,7 +5,8 @@ import Swal from 'sweetalert2';
 import SubStationary from '../SubStationaryItems/SubStationary';
 
 
-const StationeryRequestForm = () => {
+const StationeryRequestForm = () => 
+  {
   const stationeryOptions =
   {
     Standard: ["ERASERS (Nos.)", "SHARPENERS (Nos.)", "POST IT PAD SMALL - ALL COLOURS (Pads)", "WHITENER PEN (Nos.)", "PUNCHING MACHINE DP 600 (Nos.)",],
@@ -19,7 +20,8 @@ const StationeryRequestForm = () => {
     "CALCULATOR (Nos.)", "JUM CLIP - SMALL (Pkts.)", "BINDING CLIPS - 15MM (Pkts.)", "PIN REMOVER SR 100 (Nos.)", "STAPLER SMALL (Nos.)", "STAPLER PINS SMALL (Nos.)", "PEN BLUE (Nos.)", "PEN BLACK (Nos.)", "PEN RED (Nos.)", "PENCIL (Nos.)", "ERASERS (Nos.)", "SHARPENERS (Nos.)", "POST IT PAD SMALL - ALL COLOURS (Pads)", "WHITENER PEN (Nos.)", "PUNCHING MACHINE DP 600 (Nos.)", "DIARY NOTE BOOK", "STEEL WATER BOTTLES(Nos.)"
   ];
 
-  const [userToken, setToken] = useState(() => {
+  const [userToken, setToken] = useState(() => 
+  {
     return JSON.parse(localStorage.getItem('userInfo')) || {};
   });
   // Initialize form data with user information from token
@@ -44,30 +46,31 @@ const StationeryRequestForm = () => {
   useEffect(() => {
     // Check if this is a page refresh
     const isPageRefresh = performance.navigation &&
-      performance.navigation.type === 1;
-
+    performance.navigation.type === 1;
     // Alternative check for browsers that don't support performance.navigation
-    if (isPageRefresh || document.referrer === document.location.href) {
+    if (isPageRefresh || document.referrer === document.location.href) 
+    {
       // Clear localStorage on page refresh
-      localStorage.removeItem('stationeryFormDraft');
+       localStorage.removeItem('stationeryFormDraft');
     }
-
     // Always set today's date
     const today = new Date();
     const formattedDate = today.toISOString().split('T')[0];
     setFormData(prev => ({ ...prev, date: formattedDate }));
   }, []);
 
-  const handleBack = () => {
+  const handleBack = () => 
+  {
     navigate('/dashboard');
   };
 
-  const validateForm = () => {
+  const validateForm = () => 
+  {
     const newErrors = {};
     const requiredFields = ['date', 'request_for', 'name', 'email', 'emp_id', 'department', 'hod_name'];
-
     requiredFields.forEach(field => {
-      if (!formData[field]) {
+      if (!formData[field]) 
+      {
         newErrors[field] = `${field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} is required`;
       }
     });
@@ -75,29 +78,26 @@ const StationeryRequestForm = () => {
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email address is invalid';
     }
-
     // Validate each item in the items array
     let hasValidItems = false;
     formData.items.forEach((item) => {
       if (item.stationary && item.quantity) {
-        hasValidItems = true;
+          hasValidItems = true;
       }
     });
-
     if (!hasValidItems) {
       newErrors.items = 'At least one stationery item must have both type and quantity selected';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
-  const handleChange = (e) => {
+  const handleChange = (e) => 
+  {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-
     // Clear the error for this field if it exists
-    if (errors[name]) {
+    if (errors[name]) 
+    {
       setErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors[name];
@@ -106,11 +106,12 @@ const StationeryRequestForm = () => {
     }
   };
 
-  const handleRadioChange = (value) => {
-    setFormData(prev => ({ ...prev, request_for: value }));
-
+  const handleRadioChange = (value) => 
+  {
+    setFormData(prev => ({...prev,request_for: value}));
     // Clear the error for this field if it exists
-    if (errors.request_for) {
+    if (errors.request_for) 
+      {
       setErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors.request_for;
@@ -124,12 +125,14 @@ const StationeryRequestForm = () => {
     const updatedItems = [...formData.items];
     console.log(updatedItems);
     updatedItems[index] = { ...updatedItems[index], [name]: value };
-    setFormData(prev => ({ ...prev, items: updatedItems }));
+    setFormData(prev => ({...prev,items:updatedItems }));
 
     // Clear the items error if all items now have values
-    if (errors.items) {
+    if (errors.items) 
+      {
       const allItemsValid = updatedItems.every(item => item.stationary && item.quantity);
-      if (allItemsValid) {
+      if (allItemsValid) 
+      {
         setErrors(prev => {
           const newErrors = { ...prev };
           delete newErrors.items;
@@ -146,7 +149,8 @@ const StationeryRequestForm = () => {
     }));
   };
 
-  const handleRemoveItem = (index) => {
+  const handleRemoveItem = (index) => 
+  {
     if (formData.items.length > 1) {
       setFormData(prev => ({
         ...prev,
@@ -158,7 +162,6 @@ const StationeryRequestForm = () => {
   const handleReset = () => {
     const today = new Date();
     const formattedDate = today.toISOString().split('T')[0];
-
     setFormData({
       date: formattedDate,
       request_for: "",
@@ -167,11 +170,10 @@ const StationeryRequestForm = () => {
       emp_id: userToken.Emp_Id || "",
       department: "",
       hod_name: "",
-      items: [{ stationary: "", quantity: "", remarks: "" }],
+      items:[{ stationary: "", quantity: "", remarks: "" }],
     });
     setErrors({});
     setAttempted(false);
-
     // Clear the saved draft from localStorage
     localStorage.removeItem('stationeryFormDraft');
   };
@@ -179,7 +181,6 @@ const StationeryRequestForm = () => {
   const handleSaveAsDraft = () => {
     // Save form data to localStorage
     localStorage.setItem('stationeryFormDraft', JSON.stringify(formData));
-
     // Show the draft modal
     setModalType("draft");
     setShowModal(true);
@@ -199,9 +200,9 @@ const StationeryRequestForm = () => {
     }
     // Filter out any empty items before submission
     const filteredItems = formData.items.filter(item => item.stationary && item.quantity);
-
     // If no valid items remain after filtering, show an error
-    if (filteredItems.length === 0) {
+    if (filteredItems.length === 0) 
+    {
       Swal.fire({
         icon: 'error',
         title: 'No Items Selected',
@@ -225,7 +226,8 @@ const StationeryRequestForm = () => {
       cancelButtonText: 'No',
     });
     // Only proceed if user confirmed
-    if (!result.isConfirmed) {
+    if (!result.isConfirmed) 
+    {
       return; // User clicked "No", cancel submission
     }
     try {
@@ -239,13 +241,16 @@ const StationeryRequestForm = () => {
         body: JSON.stringify(submissionData), // Use the filtered data
       });
       const data = await response.json();
-      if (response.ok) {
+      if (response.ok) 
+      {
         Swal.fire({
           icon: 'success',
           title: 'Success!',
           text: data.success || 'Data stored successfully.',
         });
-      } else {
+      } 
+      else 
+      {
         Swal.fire({
           icon: 'error',
           title: 'Submission Failed',
@@ -265,25 +270,25 @@ const StationeryRequestForm = () => {
   const inputStyle = "w-full border border-blue-500 rounded-full p-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400";
   const highlightedInputStyle = "w-full border border-blue-500 rounded-full p-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 bg-blue-50";
   const errorInputStyle = "w-full border border-red-500 rounded-full p-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-red-400 bg-red-50";
-
   // Function to determine the correct style for input fields
-  const getInputStyle = (fieldName) => {
-    if (errors[fieldName] && attempted) {
+  const getInputStyle = (fieldName) => 
+  {
+    if (errors[fieldName] && attempted) 
+    {
       return errorInputStyle;
     }
-
     // Highlighted fields are date, name, email, emp_id
-    if (['date', 'name', 'email', 'emp_id'].includes(fieldName)) {
+    if (['date', 'name', 'email', 'emp_id'].includes(fieldName))
+    {
       return highlightedInputStyle;
     }
-
-    return inputStyle;
+      return inputStyle;
   };
 
-  const Modal = ({ onClose }) => {
+  const Modal = ({onClose}) => 
+  {
     const hasErrors = modalType === "error";
-    const isDraft = modalType === "draft";
-
+    const isDraft   = modalType === "draft";
     return (
       <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white p-4 rounded-md max-w-md w-full text-center">
@@ -353,7 +358,6 @@ const StationeryRequestForm = () => {
           </div>
 
           <div className="h-0.5 bg-blue-600 w-[95%] mx-auto"></div>
-
           <div className="p-3">
             <form onSubmit={handleSubmit} noValidate>
               {/* Top Layout */}
