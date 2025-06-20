@@ -251,7 +251,7 @@ function App() {
       ],
     },
   ], {
-    basename: '/myHomeDashboard', // ✅ Put basename here
+    basename: '/myHomeDashCICD', // ✅ Put basename here
   }
 )
   

@@ -231,7 +231,7 @@ const StationeryRequestForm = () =>
       return; // User clicked "No", cancel submission
     }
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/emp-stationary-store', {
+      const response = await fetch('http://172.20.0.12:8085/StationeryApis/api/emp-stationary-store', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

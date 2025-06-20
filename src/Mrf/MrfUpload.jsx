@@ -36,7 +36,7 @@ const FileUpload = () => {
     formData.append('PlantCode', plantCode);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/manpower-upload', {
+      const response = await fetch('http://172.20.0.12:8085/StationeryApis/api/manpower-upload', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${userToken.token}`,

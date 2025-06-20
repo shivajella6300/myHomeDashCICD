@@ -228,8 +228,8 @@ const handleSubmit = async(e) => {
   try {
     // Different API endpoint and data based on mode
     const endpoint = formMode === 'update' 
-      ? 'http://127.0.0.1:8000/api/store-upload'
-      : 'http://127.0.0.1:8000/api/emp-stationary-upload';
+      ? 'http://172.20.0.12:8085/StationeryApis/api/store-upload'
+      : 'http://172.20.0.12:8085/StationeryApis/api/emp-stationary-upload';
     
     let requestData;
     

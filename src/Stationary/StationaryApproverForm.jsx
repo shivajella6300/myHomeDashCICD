@@ -32,7 +32,7 @@ const StationeryApproverForm = () =>
   
   const fetchDataByEmpId = async() => {
     try {
-      const getDataStBYEmpId = await fetch(`http://127.0.0.1:8000/api/gt-stat-userId/${case_id}`, 
+      const getDataStBYEmpId = await fetch(`http://172.20.0.12:8085/StationeryApis/api/gt-stat-userId/${case_id}`, 
       {
         method: "GET",
         headers: 
@@ -138,7 +138,7 @@ const StationeryApproverForm = () =>
     }
     try 
     {
-      const subStatUpdate = await fetch(`http://127.0.0.1:8000/api/${url}`,
+      const subStatUpdate = await fetch(`http://172.20.0.12:8085/StationeryApis/api/${url}`,
         {
           method:"POST",
           headers:{
@@ -200,7 +200,7 @@ const StationeryApproverForm = () =>
       return; // User clicked "No", cancel submission
     }
     try {
-      const subStatUpdate = await fetch("http://127.0.0.1:8000/api/stat-hod-rejct",
+      const subStatUpdate = await fetch("http://172.20.0.12:8085/StationeryApis/api/stat-hod-rejct",
         {
           method:"POST",
           headers:{

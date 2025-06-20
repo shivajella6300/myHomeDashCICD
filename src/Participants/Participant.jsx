@@ -35,7 +35,7 @@ const Participant = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/api/participants', {
+        const response = await axios.get('http://172.20.0.12:8085/StationeryApis/api/participants', {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
@@ -68,7 +68,7 @@ const Participant = () => {
   const fetchFlowData = async (caseId) => {
     setFlowLoading(true);
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/api/stationary/${caseId}`, {
+      const response = await axios.get(`http://172.20.0.12:8085/StationeryApis/api/stationary/${caseId}`, {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",

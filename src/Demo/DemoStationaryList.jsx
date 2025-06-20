@@ -42,7 +42,7 @@ const loaderStyle = {
     setLoading(true);
     try
     {
-     const response = await axios.get('http://127.0.0.1:8000/api/getData'
+     const response = await axios.get('http://172.20.0.12:8085/StationeryApis/api/getData'
       ,
       {
       headers:
@@ -131,7 +131,7 @@ const loaderStyle = {
         }).then(async (result) => {
           if (result.isConfirmed) {
                   try {
-                      const response = await fetch("http://127.0.0.1:8000/api/hod_approve", {
+                      const response = await fetch("http://172.20.0.12:8085/StationeryApis/api/hod_approve", {
                           method: "PUT",
                           headers: { 
                               "Content-Type": "application/json",

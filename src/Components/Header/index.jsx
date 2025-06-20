@@ -59,7 +59,7 @@ function Header() {
 
   const userLogout = async () => {
     try {
-      const LogoutResponse = await fetch("http://127.0.0.1:8000/api/StationeryApis/api/logout", {
+      const LogoutResponse = await fetch("http://172.20.0.12:8085/StationeryApis/api/logout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
